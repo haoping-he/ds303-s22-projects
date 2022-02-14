@@ -1,0 +1,106 @@
+---
+title: "Michigan COVID Data"
+author: "Adam DenHaan "
+output: 
+  html_document:
+    fig_height: 4
+    fig_width: 7
+  pdf_document:
+    fig_height: 2.2
+    fig_width: 4
+  word_document:
+    fig_height: 2.2
+    fig_width: 4
+---
+
+```{r setup, include=FALSE}
+# R Setup
+knitr::opts_chunk$set(echo = TRUE, fig.path = "MiCorona_files/figure-gfm/")
+library(zoo)
+library(dplyr)
+library(rlang)
+library(plotly)
+library(lubridate)
+library(gginnards)
+library(patchwork)
+# Python Setup
+library(reticulate)
+if (!py_module_available("bs4")) py_install("bs4")
+if (!py_module_available("urllib")) py_install("urllib")
+if (!py_module_available("pandas")) py_install("pandas")
+if (!py_module_available("datetime")) py_install("datetime")
+if (!py_module_available("openpyxl")) py_install("openpyxl")
+py_run_string("import pandas as pd; pd.options.display.max_columns = None")
+```
+
+Get link for data:
+```{python get-excel-link, results='hide'}
+from urllib.request import urlopen
+
+from bs4 import BeautifulSoup
+
+# Get data into pandas df
+URL = "https://www.michigan.gov/coronavirus/0,9753,7-406-98163_98173---,00.html"
+HTML = urlopen(URL).read().decode("utf-8")
+start_index = HTML.find("shortdesc")
+end_index = HTML.find("footerArea")
+data = HTML[start_index:end_index]
+soup = BeautifulSoup(data, features="html.parser")
+links = [link.get('href') for link in soup.find_all('a')]
+finallink = "https://michigan.gov" + \
+    [i for i in links if "by_Date" in i][0]
+```
+
+Download data:
+```{r get-excel}
+download.file(py$finallink, destfile = "data/covid.xlsx")
+mi_data = readxl::read_excel("data/covid.xlsx")
+```
+
+Clean data:
+```{python aggregate-data}
+mi_data = r.mi_data
+max_date = max(mi_data["Updated"])
+agg_data = mi_data.groupby(["Date"], as_index=False).sum()
+```
+
+```{r data-load}
+date_update = format(py$max_date, '%d %b %Y')
+mi_cases_by_day = py$agg_data
+head(mi_cases_by_day)
+```
+
+Initial Data Visualization:
+
+```{r}
+plot_ly(
+  mi_cases_by_day,
+  x = ~Date,
+  y = ~Cases
+)
+```
+
+With 7 day moving average:
+
+
+```{r}
+mi_cases_by_day <- mi_cases_by_day %>%
+  mutate(
+    cases_ma = rollapply(Cases, 7, mean, align = "center", fill = 0),
+    deaths_ma = rollapply(Deaths, 7, mean, align = "center", fill = 0)
+  )
+```
+
+
+```{r message=FALSE}
+plot_ly(
+  mi_cases_by_day,
+  x = ~Date
+) %>% add_trace(
+  y = ~Cases
+) %>%
+  add_lines(
+    y = ~cases_ma
+  ) 
+```
+
