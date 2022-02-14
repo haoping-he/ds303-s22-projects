@@ -13,8 +13,25 @@ knit: (
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(plotly)
 ```
 
-## Not much here 
+## Import Data
+```{r}
+data <- read.csv("USA_GDP_Annual.csv")
+```
 
-Nick has some work to do.
+## Data Wrangling
+```{r}
+data$Gross.domestic.product <- as.numeric(gsub("," ,"" , data$Gross.domestic.product))
+```
+
+## Create Plotly Graphic
+```{r}
+data %>%
+  plot_ly() %>%
+  add_lines(x = ~Year, y = ~Gross.domestic.product) %>%
+  layout(title = "GDP by Year")
+```
+
