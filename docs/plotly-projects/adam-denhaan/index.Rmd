@@ -90,12 +90,18 @@ mi_cases_by_day <- mi_cases_by_day %>%
 ```{r message=FALSE}
 plot_ly(
   mi_cases_by_day,
-  x = ~Date
+  x = ~Date,
+  showlegend = FALSE
 ) %>% add_trace(
-  y = ~Cases
+  y = ~Cases,
+  alpha = .6
 ) %>%
-  add_lines(
-    y = ~cases_ma
-  ) 
+add_lines(
+  y = ~cases_ma,
+  alpha = .8
+) %>%
+layout(
+  title = "Michigan COVID Cases<br>With 7-day Moving Average"
+)
 ```
 
