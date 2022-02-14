@@ -21,17 +21,57 @@ library(plotly)
 ```{r}
 data <- read.csv("USA_GDP_Annual.csv")
 ```
+**Note**: All values are measured in millions of USD.
 
 ## Data Wrangling
+### Column Types & Removing Commas
 ```{r}
-data$Gross.domestic.product <- as.numeric(gsub("," ,"" , data$Gross.domestic.product))
+# convert to string
+#data$Year <- as.character(data$Year)
+
+# remove commas & convert to numeric
+data$GDP <- as.numeric(gsub("," ,"" , data$GDP))
+data$Consumption <- as.numeric(gsub("," ,"" , data$Consumption))
+data$Investment <- as.numeric(gsub("," ,"" , data$Investment))
+data$Net.Exports <- as.numeric(gsub("," ,"" , data$Net.Exports))
+data$Government.Spending <- as.numeric(gsub("," ,"" , data$Government.Spending))
 ```
 
-## Create Plotly Graphic
+### Keep Certain Years
+```{r}
+# keep years that are multiples of 10
+data10 <- subset(data, Year %% 10 == 0)
+#data10$Year <- as.character(data10$Year)
+```
+
+### Add Proportions
+```{r}
+# add proportion of consumption, investment, net exports, and government spending
+data10 <- data10 %>% mutate(
+  Consumption.prop = Consumption / GDP,
+  Investment.prop = Investment / GDP,
+  Net.Exports.prop = Net.Exports / GDP,
+  Government.Spending.prop = Government.Spending / GDP
+)
+```
+
+### Pivot Data
+```{r}
+# each proportion needs to have its own row
+
+```
+
+## Create *plotly* Graphic
 ```{r}
 data %>%
   plot_ly() %>%
-  add_lines(x = ~Year, y = ~Gross.domestic.product) %>%
+  add_lines(x = ~Year, y = ~GDP) %>%
   layout(title = "GDP by Year")
 ```
 
+```{r}
+data10 %>%
+  plot_ly() %>%
+  add_bars(x = ~Year, y = ~GDP, color = ~Consumption.prop) %>%
+  layout(barmode = "stack", title = "GDP by Year")
+```
