@@ -1,3 +1,3 @@
-### README
+### Michigan COVID visualization 
 
-Temp README file.
+Made using R's (Plotly)["https://plotly.com/r/"] interface. 
