@@ -12,7 +12,7 @@ knit: (
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, fig.height = 5.5, fig.width = 9.5)
 
 library(plotly)
 ```
@@ -26,9 +26,6 @@ data <- read.csv("USA_GDP_Annual.csv")
 ## Data Wrangling
 ### Column Types & Removing Commas
 ```{r}
-# convert to string
-#data$Year <- as.character(data$Year)
-
 # remove commas & convert to numeric
 data$GDP <- as.numeric(gsub("," ,"" , data$GDP))
 data$Consumption <- as.numeric(gsub("," ,"" , data$Consumption))
@@ -41,7 +38,6 @@ data$Government.Spending <- as.numeric(gsub("," ,"" , data$Government.Spending))
 ```{r}
 # keep years that are multiples of 10
 data10 <- subset(data, Year %% 10 == 0)
-#data10$Year <- as.character(data10$Year)
 ```
 
 ### Add Proportions
@@ -55,23 +51,52 @@ data10 <- data10 %>% mutate(
 )
 ```
 
-### Pivot Data
-```{r}
-# each proportion needs to have its own row
-
-```
-
 ## Create *plotly* Graphic
-```{r}
+### GDP by Year (Line)
+```{r, echo=FALSE}
 data %>%
   plot_ly() %>%
   add_lines(x = ~Year, y = ~GDP) %>%
-  layout(title = "GDP by Year")
+  layout(title = "GDP by Year", yaxis = list(title = "GDP (millions of USD)"))
 ```
 
-```{r}
+### GDP by Year (Bar)
+```{r, warning=FALSE, echo=FALSE}
 data10 %>%
   plot_ly() %>%
-  add_bars(x = ~Year, y = ~GDP, color = ~Consumption.prop) %>%
-  layout(barmode = "stack", title = "GDP by Year")
+  add_bars(x = ~Year, y = ~GDP, color = ~Year) %>%
+  layout(barmode = "stack", title = "GDP by Year", yaxis = list(title = "GDP (millions of USD)"))
+```
+
+### Components of GDP by Year (Stacked)
+```{r, echo=FALSE}
+data10 %>%
+  plot_ly() %>%
+  add_bars(x = ~Year, y = ~Consumption.prop, name = "Consumption") %>%
+  add_trace(type = "bar", x = ~Year, y = ~Investment.prop, name = "Investment") %>%
+  add_trace(type = "bar", x = ~Year, y = ~Net.Exports.prop, name = "Net Exports") %>%
+  add_trace(type = "bar", x = ~Year, y = ~Government.Spending.prop, name = "Government Spending") %>%
+  layout(barmode = "stack", title = "Components of GDP by Year", yaxis = list(title = "Proportion of GDP"))
+```
+
+### Components of GDP by Year (Group)
+```{r, echo=FALSE}
+data10 %>%
+  plot_ly() %>%
+  add_bars(x = ~Year, y = ~Consumption.prop, name = "Consumption") %>%
+  add_trace(type = "bar", x = ~Year, y = ~Investment.prop, name = "Investment") %>%
+  add_trace(type = "bar", x = ~Year, y = ~Net.Exports.prop, name = "Net Exports") %>%
+  add_trace(type = "bar", x = ~Year, y = ~Government.Spending.prop, name = "Government Spending") %>%
+  layout(barmode = "group", title = "Components of GDP by Year", yaxis = list(title = "Proportion of GDP"))
+```
+
+### Components of GDP by Year (Pie Charts)
+```{r, echo=FALSE}
+data10 %>%
+  plot_ly() %>%
+  add_bars(x = ~Year, y = ~Consumption.prop, name = "Consumption") %>%
+  add_trace(type = "bar", x = ~Year, y = ~Investment.prop, name = "Investment") %>%
+  add_trace(type = "bar", x = ~Year, y = ~Net.Exports.prop, name = "Net Exports") %>%
+  add_trace(type = "bar", x = ~Year, y = ~Government.Spending.prop, name = "Government Spending") %>%
+  layout(barmode = "group", title = "Components of GDP by Year", yaxis = list(title = "Proportion of GDP"))
 ```
