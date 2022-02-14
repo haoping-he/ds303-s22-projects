@@ -27,7 +27,8 @@ if (!py_module_available("openpyxl")) py_install("openpyxl")
 py_run_string("import pandas as pd; pd.options.display.max_columns = None")
 ```
 
-Get link for data:
+### Get link for data:
+
 ```{python get-excel-link, results='hide'}
 from urllib.request import urlopen
 
@@ -45,14 +46,16 @@ finallink = "https://michigan.gov" + \
     [i for i in links if "by_Date" in i][0]
 ```
 
-Download data:
+### Download data:
+
 ```{r get-excel}
 temp <- tempfile()
 download.file(py$finallink, destfile = temp)
 mi_data <- readxl::read_excel(temp)
 ```
 
-Clean data:
+### Clean data:
+
 ```{python aggregate-data}
 mi_data = r.mi_data
 max_date = max(mi_data["Updated"])
@@ -65,7 +68,7 @@ mi_cases_by_day = py$agg_data
 head(mi_cases_by_day)
 ```
 
-Initial Data Visualization:
+### Initial Data Visualization:
 
 ```{r message=FALSE}
 plot_ly(
@@ -75,7 +78,7 @@ plot_ly(
 )
 ```
 
-With 7 day moving average:
+### With 7 day moving average and deaths:
 
 
 ```{r}
@@ -88,21 +91,26 @@ mi_cases_by_day <- mi_cases_by_day %>%
 
 
 ```{r message=FALSE}
-plot_ly(
-  mi_cases_by_day,
-  x = ~Date
-) %>% add_trace(
-  y = ~Cases,
-  alpha = .6,
-  name = "Cases"
-) %>%
-add_lines(
-  y = ~cases_ma,
-  alpha = .8,
-  name = "Cases MA"
-) %>%
-layout(
-  title = "Michigan COVID Cases<br>With 7-day Moving Average"
-)
+ay <- list(tickfont = list(color = "red"),
+  overlaying = "y",
+  side = "right",
+  title = "Deaths")
+
+plot_ly(mi_cases_by_day,x = ~Date) %>% 
+  # Cases
+  add_trace(y = ~Cases, alpha = .6, name = "Cases", type = "scatter", 
+            mode = 'markers') %>%
+  # Cases MA
+  add_lines(y = ~cases_ma, alpha = .8, name = "Cases MA", mode = 'markers') %>%
+  # Deaths
+  add_trace(name = "Deaths", yaxis = "y2", alpha = .15, y = ~Deaths, x = ~Date,
+            color = I("red"), type = "scatter", mode = 'markers') %>%
+  # Deaths MA
+  add_lines(name = "Deaths MA", yaxis = "y2", y = ~deaths_ma, x = ~Date,
+            line = list(color = I("red")), alpha = .8/4, mode = 'markers') %>%
+  layout(
+    title = "Michigan COVID Cases/Deaths<br>With 7-day Moving Average",
+    yaxis2 = ay, legend = list(x = 0.6, y = 0.9),margin = list(r = 50, t = 50)
+  ) 
 ```
 
