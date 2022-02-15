@@ -1,0 +1,137 @@
+---
+title: "Nick's Graphic"
+author: "Nick Beery"
+date: "Spring 2022"
+output: html_document
+knit: (
+  function(inputFile, encoding) { 
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      output_file = 'index.html') })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.height = 5.5, fig.width = 9.5)
+
+library(plotly)
+library(RColorBrewer)
+```
+
+## Import Data
+```{r}
+data <- read.csv("USA_GDP_Annual.csv")
+```
+**Note**: All values are measured in millions of USD.
+
+## Data Wrangling
+### Column Types & Removing Commas
+```{r}
+# remove commas & convert to numeric
+data$GDP <- as.numeric(gsub("," ,"" , data$GDP))
+data$Consumption <- as.numeric(gsub("," ,"" , data$Consumption))
+data$Investment <- as.numeric(gsub("," ,"" , data$Investment))
+data$Net.Exports <- as.numeric(gsub("," ,"" , data$Net.Exports))
+data$Government.Spending <- as.numeric(gsub("," ,"" , data$Government.Spending))
+```
+
+### Keep Certain Years
+```{r}
+# keep years that are multiples of 10
+data10 <- subset(data, Year %% 10 == 0)
+```
+
+### Add Proportions
+```{r}
+# add proportion of consumption, investment, net exports, and government spending
+data <- data %>% mutate(
+  Consumption.prop = Consumption / GDP,
+  Investment.prop = Investment / GDP,
+  Net.Exports.prop = Net.Exports / GDP,
+  Government.Spending.prop = Government.Spending / GDP
+)
+data10 <- data10 %>% mutate(
+  Consumption.prop = Consumption / GDP,
+  Investment.prop = Investment / GDP,
+  Net.Exports.prop = Net.Exports / GDP,
+  Government.Spending.prop = Government.Spending / GDP
+)
+```
+
+## Create *plotly* Graphic
+### GDP by Year (Line)
+```{r, echo=FALSE}
+data %>%
+  plot_ly() %>%
+  add_lines(x = ~Year, y = ~GDP) %>%
+  layout(title = "GDP by Year", yaxis = list(title = "GDP (millions of USD)"))
+```
+
+### GDP by Year (Bar)
+```{r, warning=FALSE, echo=FALSE}
+data10 %>%
+  plot_ly() %>%
+  add_bars(x = ~Year, y = ~GDP, color = ~Year) %>%
+  layout(barmode = "stack", title = "GDP by Year", yaxis = list(title = "GDP (millions of USD)"))
+```
+
+### Components of GDP by Year (Stacked)
+```{r, echo=FALSE}
+data10 %>%
+  plot_ly() %>%
+  add_bars(x = ~Year, y = ~Consumption.prop, name = "Consumption") %>%
+  add_trace(type = "bar", x = ~Year, y = ~Investment.prop, name = "Investment") %>%
+  add_trace(type = "bar", x = ~Year, y = ~Net.Exports.prop, name = "Net Exports") %>%
+  add_trace(type = "bar", x = ~Year, y = ~Government.Spending.prop, name = "Government Spending") %>%
+  layout(barmode = "stack", title = "Components of GDP by Year", yaxis = list(title = "Proportion of GDP"))
+```
+
+### Components of GDP by Year (Interactive)
+```{r, echo=FALSE}
+data %>%
+  plot_ly() %>%
+  add_bars(x = ~Year, y = ~Consumption.prop, name = "Consumption") %>%
+  add_trace(type = "bar", x = ~Year, y = ~Investment.prop, name = "Investment") %>%
+  add_trace(type = "bar", x = ~Year, y = ~Net.Exports.prop, name = "Net Exports") %>%
+  add_trace(type = "bar", x = ~Year, y = ~Government.Spending.prop, name = "Government Spending") %>%
+  layout(title = "Components of GDP by Year", yaxis = list(title = "Proportion of GDP"),
+         xaxis = list(rangeslider = list(type = "date")),
+         updatemenus = list(list(type = "buttons", xanchor = "right", x = 1.32, y = 0.58,
+                                 buttons = list(
+                                   list(method = "relayout", args = list("barmode", "group"), 
+                                        label = "Grouped Bars"),
+                                   list(method = "relayout", args = list("barmode", "stack"), 
+                                        label = "Stacked Bars")
+                                 )),
+                            list(type = "buttons", x = 1.186, y = 0.7,
+                                 buttons = list(
+                                   list(method = "restyle", args = list("type", "bar"), 
+                                        label = "Bar")
+                                 )),
+                            list(type = "buttons", x = 1.192, y = 0.357,
+                                 buttons = list(
+                                   list(method = "restyle", args = list("type", "lines"), 
+                                        label = "Line")
+                                 ))))
+```
+
+### Final Plot
+```{r, echo=FALSE}
+data %>%
+  plot_ly() %>%
+  add_trace(type = "bar", x = ~Year, y = ~Consumption.prop, name = "Consumption") %>%
+  add_trace(type = "bar", x = ~Year, y = ~Investment.prop, name = "Investment") %>%
+  add_trace(type = "bar", x = ~Year, y = ~Net.Exports.prop, name = "Net Exports") %>%
+  add_trace(type = "bar", x = ~Year, y = ~Government.Spending.prop, name = "Government Spending") %>%
+  layout(title = list(text = "Components of GDP by Year", font = list(size = 22), y = 0.99), 
+         yaxis = list(title = "Proportion of GDP"),
+         xaxis = list(rangeslider = list(type = "date")),
+         updatemenus = list(list(type = "buttons", direction = "right", x = 0.79, y = 0.98,
+                                 buttons = list(
+                                   list(method = "restyle", args = list("type", "bar"), 
+                                        label = "Bar Chart"),
+                                   list(method = "restyle", args = list("type", "lines"), 
+                                        label = "Line Chart")
+                                 ))),
+         colorway = c("#5d69b1", "#e58606", "#52bca3", "#99c945"))
+```
