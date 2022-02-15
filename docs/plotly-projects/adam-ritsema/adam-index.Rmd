@@ -13,8 +13,11 @@ knit: (
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
 ```
 
-## Not much here 
+### Read in Data
 
-Johnny has some work to do.
+```{r}
+consumer_behavior <- read_csv("Data/marketing_data.csv")
+```
