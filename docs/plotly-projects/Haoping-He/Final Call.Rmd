@@ -1,0 +1,68 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(plotly)
+library(devtools)
+library(shiny)
+
+```
+
+
+```{r}
+#Share of adults that are overweight or obese, 2016
+obesity <- read.csv("/home/yh38/DATA303/Data Viz/obesity.csv")
+#Daily supply of calories
+caloric <- read.csv("/home/yh38/DATA303/Data Viz/daily-per-capita-caloric-supply.csv")
+#Daily supply of protein
+protein <- read.csv("/home/yh38/DATA303/Data Viz/daily-per-capita-protein-supply.csv")
+#Daily supply of fat
+fat <- read.csv("/home/yh38/DATA303/Data Viz/daily-per-capita-fat-supply.csv")
+#Daily supply of vegies
+vegies <- read.csv("/home/yh38/DATA303/Data Viz/average-per-capita-vegetable-intake-vs-minimum-recommended-guidelines.csv")
+#Daily supply of Fruit
+fruit <- read.csv("/home/yh38/DATA303/Data Viz/fruit-consumption-per-capita.csv")
+
+Obesity <- obesity%>%filter(Year == 2016) %>% select(-Year, -Code)
+Caloric<- caloric%>%filter(Year == 2016) %>% select(-Year,-Code)
+Protein<- protein%>%filter(Year == 2016) %>% select(-Year,-Code)
+Vegies<- vegies%>%filter(Year == 2016) %>% select(-Year,-Code)
+Fruit<- fruit%>%filter(Year == 2016) %>% select(-Year,-Code)
+Fat<- fat%>%filter(Year == 2016) %>% select(-Year)
+
+Data <- Fat %>% left_join(Protein, by = 'Entity') %>%
+  left_join(Caloric, by = 'Entity') %>%
+  left_join(Obesity, by = 'Entity')%>%
+    left_join(Vegies, by = 'Entity')%>%
+  left_join(Fruit, by = 'Entity')%>%
+  rename(Fat = Fat.supply.quantity..g.capita.day...FAO..2020., 
+         Caloric = Daily.caloric.supply..OWID.based.on.UN.FAO...historical.sources.,
+         Protein = Protein.supply.quantity..g.capita.day...FAO..2020.,
+         Obesity = Indicator.Prevalence.of.obesity.among.adults..BMI..GreaterEqual..30..crude.estimate........Sex.Both.sexes, 
+         Vegies = Vegetables...Food.supply.quantity..kg.capita.yr...FAO..2020.,
+         Fruit = Fruits...Excluding.Wine...Food.supply.quantity..kg.capita.yr...FAO..2020.,
+         Country = Entity)
+```
+
+```{r}
+Data$hover <- with(Data, paste( '<b>' , Country , '</b>' , '<br>', 
+                                           "Fat", '<b>' , Fat,'</b>', "g/day", "<br>", 
+                                           "Protein", '<b>' , Protein,'</b>', "g/day", "<br>",
+                                            "Fruit", '<b>' , Fruit,'</b>', "g/day", "<br>",
+                                            "Vegies", '<b>' , Vegies,'</b>', "g/day", "<br>",
+                                           "Caloric", '<b>' , Caloric,'</b>', "kcal/day", "<br>"))
+
+fig <-  plot_ly(Data, type='choropleth', 
+                      locations=Data$Code, 
+                      z=Data$Obesity,  
+                      text=Data$hover, 
+                      colorscale="Viridis", reversescale = TRUE) %>% 
+  layout(title = 'Global Adults' Obesity Rate & Daily Diet Intake (2016)')
+
+fig
+```
+
+
