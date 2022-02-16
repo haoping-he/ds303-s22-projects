@@ -16,21 +16,21 @@ library(tidyverse)
 library(plotly)
 ```
 
-```{r load-data}
+```{r load-data, include=FALSE}
 lego_themes <- read_csv("data/themes.csv")
 lego_sets <- read_csv("data/sets.csv")
 ```
 
-```{r data-peak}
+```{r data-peak, include=FALSE}
 head(lego_themes)
 head(lego_sets)
 ```
 
-```{r wrangle-merge}
+```{r wrangle-merge, include=FALSE}
 lego <- merge(lego_themes, lego_sets, by.x ="id", by.y ="theme_id", all.x = TRUE, all.y = FALSE)
 ```
 
-```{r wrangle}
+```{r wrangle, include=FALSE}
 head(lego)
 lego_wrangle <- lego %>%
   group_by(name.x, year) %>%
@@ -40,7 +40,7 @@ lego_wrangle
 ```
 
 
-```{r vis}
+```{r vis, include=FALSE}
 lego_highlight <- highlight_key(lego_wrangle, ~name.x)
 
 base <- plot_ly(lego_highlight, color = I("black")) %>%
@@ -60,6 +60,8 @@ highlight(
 
 ```
 
+# Lego Visualization
+
 ```{r vis2}
 lego_plot <- base %>%
   summarise(sum = sum(n)) %>%
@@ -77,6 +79,20 @@ subplot(lego_plot, time_series, widths = c(.2, .8), titleX = TRUE) %>%
   layout(showlegend = FALSE) %>%
   highlight(on = "plotly_selected", dynamic = TRUE, selectize = TRUE, persistent = TRUE)
 ```
+
+# Lego Set Data
+
+```{r}
+head(lego_wrangle)
+```
+
+From https://www.kaggle.com/rtatman/lego-database/version/1?select=themes.csv and was made merging themes.csv and sets.csv while filtering by themes containing 'Star Wars'
+
+# References
+
+https://plotly-r.com/index.html
+
+# Reflection
 
 
 * [plotly projects](plotly-projects)
