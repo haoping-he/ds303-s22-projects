@@ -1,0 +1,159 @@
+---
+title: "Population, GDP, Year"
+author: "Tom Takeuchi"
+date: "Spring 2022"
+output: html_document
+knit: (
+  function(inputFile, encoding) { 
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      output_file = 'index.html') })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(plotly)
+```
+
+## Background
+
+For this project, I decided to recreate Hans Rosling's population and GDP graph. The graph can be found [here](https://www.youtube.com/watch?v=jbkSRLYSojo&ab_channel=BBC). 
+
+Since the video did not share the dataset, I downloaded another dataset from [Our World in Data](https://ourworldindata.org/grapher/life-expectancy-vs-gdp-per-capita). 
+
+## Data Overview and Wrangling
+
+Although the year starts from 1870, I decided to use data only after 1950 because most countries miss values for population and GDP for years before 1950.
+
+
+```{r}
+le <- read.csv("data/life_expectancy_data.csv") %>% 
+  janitor::clean_names() %>% 
+  na.omit() %>% 
+  filter(entity != "World",
+         year >= 1950) 
+```
+
+```{r}
+le %>% head()
+```
+
+There are 166 countries in the dataset, but it misses information about which continent a country belongs to.
+
+I used [this website](https://statisticstimes.com/geography/countries-by-continents.php) as a reference to continent, and manually labeled each country.
+
+```{r}
+le %>% distinct(entity) %>% nrow()
+```
+
+```{r}
+le <- le %>% 
+  mutate(continent = case_when
+         (entity %in% c("Algeria", "Angola", "Benin", "Botswana",
+                        "Burkina Faso", "Burundi", "Cameroon", "Cape Verde",
+                        "Central African Republic", "Chad", "Comoros", "Congo",
+                        "Cote d'Ivoire", "Democratic Republic of Congo",
+                        "Djibouti", "Egypt", "Equatorial Guinea", "Eswatini",
+                        "Ethiopia", "Gabon", "Gambia", "Ghana", "Guinea",
+                        "Guinea-Bissau", "Kenya", "Lesotho", "Liberia", "Libya",
+                        "Madagascar", "Malawi", "Mali", "Mauritania", "Mauritius", 
+                        "Morocco", "Mozambique", "Namibia", "Niger", "Nigeria", "Rwanda",
+                        "Sao Tome and Principe", "Senegal", "Seychelles",
+                        "Sierra Leone", "South Africa", "Sudan", "Tanzania", "Togo",
+                        "Tunisia", "Uganda", "Zambia", "Zimbabwe"
+                        )
+           ~ "Africa",
+           
+          entity %in% c("Barbados", "Canada", "Costa Rica", "Cuba", "Dominica",
+                        "Dominican Republic", "El Salvador", "Guatemala", "Haiti",
+                        "Honduras", "Jamaica", "Mexico", "Nicaragua",
+                        "Panama", "Puerto Rico", "Saint Lucia", 
+                        "Trinidad and Tobago", "United States"
+                        ) 
+           ~ "North America",
+           
+          entity %in% c("Argentina", "Bolivia", "Brazil", "Chile", "Colombia",
+                        "Ecuador", "Paraguay", "Peru", "Uruguay", "Venezuela"
+                        ) 
+           ~ "South America",
+           
+          entity %in% c("Afghanistan", "Azerbaijan", "Bahrain", "Bangladesh",
+                        "Cambodia", "China", "Cyprus", "Georgia", "Hong Kong",
+                        "India", "Indonesia", "Iran", "Iraq", "Israel", "Japan",
+                        "Jordan", "Kazakhstan", "Kuwait", "Kyrgyzstan", "Laos",
+                        "Lebanon", "Malaysia", "Moldova", "Mongolia", "Myanmar",
+                        "Nepal", "North Korea", "Oman", "Pakistan", "Palestine",
+                        "Philippines", "Qatar", "Saudi Arabia", "Singapore",
+                        "South Korea", "Sri Lanka", "Syria", "Taiwan", "Tajikistan",
+                        "Thailand", "Turkey", "Turkmenistan", "United Arab Emirates",
+                        "Uzbekistan", "Vietnam", "Yemen"
+                        ) 
+           ~ "Asia",
+           
+          entity %in% c("Albania", "Armenia", "Austria", "Belarus", "Belgium",
+                        "Bosnia and Herzegovina", "Bulgaria", "Croatia", "Czechia",
+                        "Denmark", "Estonia", "Finland", "France", "Germany", 
+                        "Greece", "Iceland", "Ireland", "Italy", "Latvia",
+                        "Lithuania", "Luxembourg", "Malta", "Montenegro",
+                        "Netherlands", "North Macedonia", "Norway", "Poland",
+                        "Portugal", "Romania", "Serbia", "Slovakia", "Slovenia",
+                        "Spain", "Sweden", "Switzerland", "Ukraine", 
+                        "United Kingdom", "Hungary"
+                        ) 
+           ~ "Europe",
+           
+          entity %in% c("Australia", "New Zealand"
+                        ) 
+           ~ "Oceania"
+  ))
+```
+
+I should have used `left_join` for the sake of efficiency...
+
+## Data Visualization
+
+I used plotly and crosstalk to make a visualization.
+
+```{r}
+library(crosstalk)
+shared_le <- SharedData$new(le)
+
+bscols(widths = c(2,NA),
+  list(
+    filter_select("continent", "Continent", shared_le, ~continent)
+  ),
+  ggplotly(shared_le %>% 
+  ggplot(aes(gdp_per_capita, life_expectancy)) +
+  geom_point(aes(size = population_historical_estimates, frame = year, ids = entity, color = continent)) +
+  scale_x_log10() +
+  labs(x = "GDP per Capita", y = "Life Expectancy", size = "Continent"))
+)
+```
+
+## Show countries in North America
+
+```{r}
+le_na <- le %>% filter(continent == "North America")
+shared_le_na <- SharedData$new(le_na)
+
+bscols(widths = c(2,NA),
+  list(
+    filter_select("entity", "Country", shared_le_na, ~entity)
+  ),
+  ggplotly(shared_le_na %>% 
+  ggplot(aes(gdp_per_capita, life_expectancy)) +
+  geom_point(aes(size = population_historical_estimates, frame = year, color = entity)) +
+  scale_x_log10() +
+  labs(x = "GDP per Capita", y = "Life Expectancy", size = "Country"))
+)
+```
+
+## Reflection
+
+* I wanted to make it as simple as possible. Without the selector for continents/countries, all dots were crammed together and it was difficult to see specific continents/countries. After implementing the selector, I think the visualization became much simpler.
+
+* Usually, selected countries do not match with what are shown in the graph, which I want to fix in the future.
+
+* The most frustrating part was definitely the mismatching.
