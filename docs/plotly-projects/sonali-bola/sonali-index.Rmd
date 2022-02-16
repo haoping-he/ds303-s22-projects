@@ -1,0 +1,33 @@
+---
+title: "Red Project Grand Rapids - plotly Project"
+author: "Sonali Bola" 
+date: "February 16th, 2022" 
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(mosaic) 
+```
+
+## Data: 
+```{r}
+rp_raw <- read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTC3DmH_qt8vUg_WuWgSlfskPljYA-g_wlOfmpoXHJGUDIx_k2NHO4rwPh28QffW_govFRjAxFVjFxp/pub?gid=0&single=true&output=csv")
+
+rp <- rp_raw %>%
+  select(-"INCIDENT.NUMBER", -"NAME", -"INCIDENT.ADDRESS",  -"PHONE.NUMBER", -"RESIDENT.ADDRESS", -"EMESIS", -"COMBATIVE", -"DISCOMFORT", -"OTHER", -"ADDITIONAL.NOTES.FROM.REPORTS", -"SUD.SERVICES", -"MAT.SERVICES", -"HEALTH.INSURANCE", -"GENERAL.MEDICAL.SERVICES", -"HOUSING.RESOURCES", 
+- "FOOD.RESOURCES", -"TRANSPORTATION.RESOURCES", -"OCCUPATIONAL.SERVICES", -"GENERAL.FOLLOW.UP.NOTES")
+
+rp <- rp%>%
+  filter(GENDER %in% c('M', 'F', 'UNK'))
+```
+
+a. Your visualization(s). Your visualization(s) should include at least one interactive element and follow good practices for the display of data.
+b. Any background information needed to understand the data or the visualization.
+c. A description of the data source with links if the data are available online. (This would include a link to data in this repository if that where the data live.)
+d. Any other references/citations as needed.
+e. A section reflecting on your project.
+- What ideas/suggestions from Claus Wilke’s helped shape your visualization?
+- Is there anything more you wish you could do with this data?
+- What were the most interesting or frustrating technical aspects of doing this?
