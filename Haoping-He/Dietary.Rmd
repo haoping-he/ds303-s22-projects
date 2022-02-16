@@ -1,0 +1,194 @@
+---
+title: "food_viz"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(plotly)
+library(devtools)
+library(shiny)
+
+```
+
+
+
+```{r}
+food_data <- read.csv("/home/yh38/DATA303/Data Viz/Food_Data.csv")
+colnames(food_data)
+
+
+#select interesting variables 
+Food_data <- food_data %>%
+  select(Country, Alcoholic.Beverages, Cereals...Excluding.Beer, Milk...Excluding.Butter, 
+         Eggs, Meat,Animal.Products, Fruits...Excluding.Wine, Vegetables, Obesity, Sugar...Sweeteners)%>%
+  rename(Beverages = Alcoholic.Beverages, 
+         Fruists = Fruits...Excluding.Wine, 
+         Sugar = Sugar...Sweeteners,
+         Cereal = Cereals...Excluding.Beer, 
+         Milk = Milk...Excluding.Butter)
+```
+
+
+
+```{r}
+#Data cleaning 
+Country_code <- read.csv('https://raw.githubusercontent.com/plotly/datasets/master/2014_world_gdp_with_codes.csv')
+
+#check NA variables and fix the names to make them match
+final_Data <- Food_data%>%
+  left_join(Country_code, by = c('Country' = "COUNTRY")) 
+
+final_Data %>%
+  filter(is.na(CODE))
+
+Country_code
+  
+# Swaziland = Eswatini, Myanmar=Burma,
+Country_code %>%
+  filter(COUNTRY %in% c('Bahamas, The', 'Congo, Democratic Republic of the', 'Czech Republic',
+                        'Swaziland', 'Gambia, The', 'Iran','Laos','Burma', 'Macedonia',
+                        'Moldova', 'Russia', 'Tanzania','United States', 'Venezuela')) 
+
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Bahamas, The")] <- "Bahamas"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Congo, Democratic Republic of the")] <- "Congo"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Czech Republic")] <- "Czechia"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Swaziland")] <- "Eswatini"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Gambia, The")] <- "Gambia"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Iran")] <- "Iran (Islamic Republic of)"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Laos")] <- "Lao People's Democratic Republic"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Burma")] <- "Myanmar"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Macedonia")] <- "North Macedonia"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Moldova")] <- "Republic of Moldova"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Russia")] <- "Russian Federation"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Tanzania")] <- "United Republic of Tanzania"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "United States")] <- "United States of America"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Venezuela")] <- "Venezuela (Bolivarian Republic of)"
+```
+
+```{r}
+Final_Data <- Food_data%>%
+  left_join(Country_code, by = c('Country' = "COUNTRY")) 
+
+#check
+Final_Data %>%
+  filter(is.na(CODE))%>%
+  select(-GDP..BILLIONS.)
+
+
+Final_Data %>% select(Country, Sugar)
+```
+
+
+
+```{r}
+
+
+Final_Data$hover <- with(Final_Data, paste(
+                                            '<b>' , Country , '</b>' , '<br>', 
+                                           "Beverages", Beverages,'%', "<br>", 
+                                           "Eggs", Eggs, '%', "<br>",
+                                           "Meat", Meat, '%',"<br>",
+                                           "Veggies", Vegetables,'%',"<br>",
+                                           "Fruits", Fruists,'%',"<br>",
+                                           'Sugar', Sugar, '%',"<br>",
+                                            'Cereals', Cereal,'%',  "<br>",
+                                            'Milk', Milk, '%',"<br>"))
+
+fig <-  plot_ly(Final_Data, type='choropleth', 
+                      locations=Final_Data$CODE, 
+                      z=Final_Data$Obesity,  
+                      text=Final_Data$hover, 
+                      colorscale="rainbow") %>% 
+  layout(title = 'Global Obesity Rate & Daily Diet Intake')
+
+fig
+
+
+
+```
+
+
+
+
+```{r}
+library(tidyverse)
+library(plotly)
+library(devtools)
+library(shiny)
+
+food_data <- read.csv("/home/yh38/DATA303/Data Viz/Food_Data.csv")
+colnames(food_data)
+
+
+#select interesting variables 
+Food_data <- food_data %>%
+  select(Country, Alcoholic.Beverages, Cereals...Excluding.Beer, Milk...Excluding.Butter, 
+         Eggs, Meat,Animal.Products, Fruits...Excluding.Wine, Vegetables, Obesity, Sugar...Sweeteners)%>%
+  rename(Beverages = Alcoholic.Beverages, 
+         Fruists = Fruits...Excluding.Wine, 
+         Sugar = Sugar...Sweeteners,
+         Cereal = Cereals...Excluding.Beer, 
+         Milk = Milk...Excluding.Butter)
+         
+         
+#Data cleaning 
+Country_code <- read.csv('https://raw.githubusercontent.com/plotly/datasets/master/2014_world_gdp_with_codes.csv')
+
+#check NA variables and fix the names to make them match
+final_Data <- Food_data%>%
+  left_join(Country_code, by = c('Country' = "COUNTRY")) 
+
+final_Data %>%
+  filter(is.na(CODE))
+
+Country_code
+  
+# Swaziland = Eswatini, Myanmar=Burma,
+Check <- Country_code %>%
+  filter(COUNTRY %in% c('Bahamas, The', 'Congo, Democratic Republic of the', 'Czech Republic',
+                        'Swaziland', 'Gambia, The', 'Iran','Laos','Burma', 'Macedonia',
+                        'Moldova', 'Russia', 'Tanzania','United States', 'Venezuela')) 
+
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Bahamas, The")] <- "Bahamas"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Congo, Democratic Republic of the")] <- "Congo"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Czech Republic")] <- "Czechia"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Swaziland")] <- "Eswatini"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Gambia, The")] <- "Gambia"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Iran")] <- "Iran (Islamic Republic of)"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Laos")] <- "Lao People's Democratic Republic"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Burma")] <- "Myanmar"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Macedonia")] <- "North Macedonia"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Moldova")] <- "Republic of Moldova"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Russia")] <- "Russian Federation"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Tanzania")] <- "United Republic of Tanzania"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "United States")] <- "United States of America"
+Country_code$COUNTRY[which(Country_code$COUNTRY == "Venezuela")] <- "Venezuela (Bolivarian Republic of)"
+
+
+
+Final_Data <- Food_data%>%
+  left_join(Country_code, by = c('Country' = "COUNTRY")) 
+  
+
+Final_Data$hover <- with(Final_Data, paste(
+                                            '<b>' , Country , '</b>' , '<br>', 
+                                           "Beverages", Beverages,'%', "<br>", 
+                                           "Eggs", Eggs, '%', "<br>",
+                                           "Meat", Meat, '%',"<br>",
+                                           "Veggies", Vegetables,'%',"<br>",
+                                           "Fruits", Fruists,'%',"<br>",
+                                           'Sugar', Sugar, '%',"<br>",
+                                            'Cereals', Cereal,'%',  "<br>",
+                                            'Milk', Milk, '%',"<br>"))
+
+fig <-  plot_ly(Final_Data, type='choropleth', 
+                      locations=Final_Data$CODE, 
+                      z=Final_Data$Obesity,  
+                      text=Final_Data$hover, 
+                      colorscale="rainbow") %>% 
+  layout(title = 'Global Obesity Rate & Daily Diet Intake')
+
+fig
+```
+
