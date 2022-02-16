@@ -1,6 +1,6 @@
 ---
 title: "Adam's Data-303 Visualization Project"
-author: "Adam Ritsema (ajr58)"
+author: "Adam Ritsema"
 date: "Spring 2022"
 output: html_document
 knit: (
