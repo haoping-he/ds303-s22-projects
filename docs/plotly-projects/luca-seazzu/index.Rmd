@@ -72,7 +72,7 @@ lego_plot <- base %>%
     hoverinfo = "x+y"
   ) %>%
   layout(
-    xaxis = list(title = "Year"),
+    xaxis = list(title = "Sum of Lego Sets"),
     yaxis = list(title = "Number of Lego Sets")
   ) 
 
