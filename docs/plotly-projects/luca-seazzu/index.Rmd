@@ -100,5 +100,3 @@ The ideas and suggestions from Claus Wilke's helped shaped my visualization in t
 I wish I was able to create more comparison ability with filters to compare different sets other than just Star Wars without it becoming to cluttered of a set. I also want to fix the axis and other visual aesthetics.
 
 The most interesting part of this was the plotly highlight function trying to color lines on click and also being able to select set names within a theme in order to compare.
-
-* [plotly projects](plotly-projects)
