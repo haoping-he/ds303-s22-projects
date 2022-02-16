@@ -1,0 +1,187 @@
+---
+title: "Winter Olympic Medal Counts"
+author: "Sadie Kornoelje"
+date: "Spring 2022"
+output: html_document
+knit: (
+  function(inputFile, encoding) { 
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      output_file = 'index.html') })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(sf)
+library(rnaturalearth)
+library(stats)
+library(MASS)
+library(broom)
+library(forecast)
+library(shiny)
+library(htmltools)
+library(htmlwidgets)
+library(plotly)
+library(ggformula)
+```
+
+### Data
+```{r}
+olympics0 <- read.csv('winter-olympics.csv')
+```
+
+[Data](https://data.world/makeovermonday/2018w7-the-winter-olympics/workspace/file?filename=Winer+Olympic+Medals.xlsx) contains medal winners from the Winter Olympics, years 1924 - 2014. Note that due to changes over history, places such as East Germany and Germany, and Russia and the Soviet Union are recorded as separate and therefore will not be collapsed into one or the other.
+
+### Medals by Country
+```{r}
+total_medals <- olympics0 |>
+  group_by(Country) |>
+  summarise(totals = n()) |>
+  filter(totals >= 100) |>
+  mutate(Country = reorder(Country, totals, max)) |>
+  ungroup()
+
+total_medals |>
+  plot_ly(x = ~Country, y = ~totals) %>%
+  add_bars() |>
+  layout(title = "Norway has more Winter Olympic Medals than All Other Countries<br> (1924 - 2014)")
+```
+
+```{r}
+medal_counts <- olympics0 |>
+  group_by(Country, Medal) |>
+  summarise(totals = n()) |>
+  filter(totals >= 30) |>
+  mutate(Medal = forcats::fct_relevel(Medal,'gold','silver','bronze'),
+         Country = reorder(Country, totals, max)
+         ) |>
+  ungroup()
+```
+
+```{r}
+medal_counts |>
+  mutate(Medal = forcats::fct_relevel(Medal,'bronze','silver','gold'),
+                Country = reorder(Country, totals, sum)) |>
+  plot_ly(x = ~Country, y = ~totals, color = ~Medal) %>%
+  add_bars() |>
+  layout(barmode = "stack",
+         hovermode = "x") |>
+  layout(title = "Norway Has the Most Gold, Silver, and Bronze Winter Olympic Medals <br> (1924 - 2014)")
+
+medal_counts2 <- olympics0 |>
+  group_by(Country, Medal) |>
+  summarise(totals = n()) |>
+  mutate(Medal = forcats::fct_relevel(Medal,'gold','silver','bronze'),
+         Country = reorder(Country, totals, max)
+         ) |>
+  ungroup()
+
+medal_counts2 |>
+  mutate(Medal = forcats::fct_relevel(Medal,'bronze','silver','gold'),
+                Country = reorder(Country, totals, sum)) |>
+  plot_ly(x = ~Country, y = ~totals, color = ~Medal) %>%
+  add_bars() |>
+  layout(barmode = "stack") |>
+  rangeslider() %>%
+  layout(hovermode = "x") |>
+  layout(title = "Norway Has the Most Gold, Silver, and Bronze Winter Olympic Medals <br> (1924 - 2014)")
+```
+
+
+```{r, echo = FALSE, include = FALSE}
+medal_counts |>
+  mutate(Country = reorder(Country, totals, sum)) |>
+  plot_ly(x = ~Country, y = ~totals, color = ~Medal) %>%
+  add_bars()
+```
+
+```{r, echo = FALSE, include=FALSE}
+medal_breaks <- c(0, 50, 100, 150, 200, Inf)
+
+binned_medals <- olympics0 |>
+  group_by(Country) |>
+  summarise(totals = n()) |>
+  ungroup() |>
+  mutate(binned_medals = cut(totals, breaks = medal_breaks))
+mosaic::tally(~binned_medals, data = binned_medals)
+```
+
+```{r, echo = FALSE, include = FALSE}
+world <- ne_countries(returnclass = "sf")
+
+medal_location <- olympics0 |>
+  group_by(Country) |>
+  summarise(totals = n()) |>
+  rename(name = Country) |>
+  left_join(world) |>
+  select(name, iso_a3, totals) 
+  
+medal_location <- medal_location |>
+  mutate(iso_a3 = if_else(name == "Britain", "GBR", iso_a3),
+         iso_a3 = if_else(name == "Liechtenstein", "LIE", iso_a3),
+         iso_a3 = if_else(name == "Czech Republic", "CZE", iso_a3)) |>
+  filter(!is.na(iso_a3))
+
+plot_ly(medal_location, 
+        type='choropleth', 
+        locations=medal_location$iso_a3, 
+        z=medal_location$totals, text=medal_location$name, colorscale="Blues",
+        reversescale = TRUE) 
+
+# medals per places?
+# medals by country by event?
+```
+
+### Choropleth of Medals
+
+```{r}
+world <- ne_countries(returnclass = "sf")
+
+medal_location2 <- olympics0 |>
+  group_by(Country, Medal) |>
+  summarise(totals = n()) |>
+  mutate(Medal = forcats::fct_relevel(Medal,'gold','silver','bronze'),
+         name = reorder(Country, totals, max)
+         ) |>
+  ungroup()
+
+medal_location2 <- medal_location2 |>
+  left_join(world) |>
+  select(name, totals, Medal, iso_a3)
+
+medal_location2 <- medal_location2 |>
+  mutate(iso_a3 = if_else(name == "Britain", "GBR", iso_a3),
+         iso_a3 = if_else(name == "Liechtenstein", "LIE", iso_a3),
+         iso_a3 = if_else(name == "Czech Republic", "CZE", iso_a3)) |>
+  filter(!is.na(iso_a3)) |>
+  pivot_wider(names_from = Medal, values_from = totals) 
+
+medal_location2 <- medal_location2 |>
+  mutate(bronze = ifelse(is.na(bronze), 0, bronze),
+         silver = ifelse(is.na(silver), 0, silver),
+         gold = ifelse(is.na(gold), 0, gold),
+         total = gold + silver + bronze)
+
+medal_location2$hover <- with(medal_location2, paste(name, '<br>', 
+                                                     "Gold:", gold, "<br>", 
+                                                     "Silver:", silver, "<br>", 
+                                                     "Bronze:", bronze))
+
+plot_ly(medal_location2, 
+        type='choropleth', 
+        locations=medal_location2$iso_a3, 
+        z=medal_location2$total, text=medal_location2$hover, colorscale="Blues",
+        reversescale = TRUE) |>
+  layout(title = "Winter Olympic Medals Won per Country <br> (1924 - 2014)") |>
+  colorbar(title = "Total Medals")
+```
+
+### Reflection
+* From Claus Wilke's book, I focused on chapter 29: *Telling a story and making a point*. Reading this chapter led me to making more specific claims about patterns in the data, rather than a general statement about the data as a whole. Still, he also warns against creating graphics that are so complex that they lose sight of what story they are trying to tell. Sometimes, simple is better.
+* With this data, it would be interesting to group by different and\or more variables, such as year or event. A common conception is that the Netherlands usually dominates Speed Skating, so I would like to look for patterns like this comparing events won by country.
+* I think it would also be interesting to see how the addition of more events has impacted medals won.
+* Both the most interesting and frustrating part was creating interactivity. It was something I'd never done before, so it was fun to add functionality, but it was difficult to implement, especially on the map. In the future, I'd like to add more interactive features to a map, such as yearly or event breakdown (as mentioned above). 
