@@ -1,0 +1,125 @@
+---
+title: "Indian Takeaway Orders"
+author: "Eleanor Lee"
+date: "2/16/2022"
+output: html_document
+knit: (
+  function(inputFile, encoding) { 
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      output_file = 'index.html') })
+
+# link to data source: https://www.kaggle.com/henslersoftware/19560-indian-takeaway-orders
+---
+
+```{r setup, include=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(stringr)
+library(dplyr)
+```
+
+## Visualization
+```{r, data wrangling, include=FALSE}
+# Load data
+rest_1_orders <- read.csv(file = "restaurant-1-orders.csv")
+
+# Group by Item.Name, sum Quantity, take avg Price (should be constant tho)
+rest_1_orders$Item.Name <- as.factor(rest_1_orders$Item.Name)
+name_and_quant <- data.frame(
+  Item.Name = rest_1_orders$Item.Name,
+  Quantity = rest_1_orders$Quantity,
+  Product.Price = rest_1_orders$Product.Price
+)
+name_and_quant <- name_and_quant %>%
+  group_by(Item.Name) %>%
+  summarise(Total.Quantity = sum(Quantity),
+            Product.Price = mean(Product.Price))
+
+# Add the proportion for each Item of #-item-orders / #-all-items-ordered
+total_num_items = sum(name_and_quant$Total.Quantity)
+name_and_quant$Prop.of.Total = name_and_quant$Total.Quantity / total_num_items
+```
+
+```{r, more data wrangling, include=FALSE}
+# Include variable denoting omnivore/herbivore status (i.e., whether dish has meat or not)
+name_and_quant$Meat.Veg = "Veg"
+name_and_quant$Item.Name <- as.character(name_and_quant$Item.Name)
+
+# tag_as_meat <- function(df, meat_word, column_checked, tag_column) {
+#   df <- df %>% mutate(tag_column = 
+#                         ifelse(str_detect(column_checked, meat_word), 
+#                                "Meat", tag_column)
+#   )
+# }
+# ^^ tried to get this guy working, but he wouldn't... so sad!!
+
+name_and_quant <- name_and_quant %>% mutate(Meat.Veg = 
+                                                ifelse(str_detect(Item.Name, "Fish"),
+                                                       "Meat", Meat.Veg))
+name_and_quant <- name_and_quant %>% mutate(Meat.Veg = 
+                                                ifelse(str_detect(Item.Name, "Beef"),
+                                                       "Meat", Meat.Veg))
+name_and_quant <- name_and_quant %>% mutate(Meat.Veg = 
+                                                ifelse(str_detect(Item.Name, "Chicken"),
+                                                       "Meat", Meat.Veg))
+name_and_quant <- name_and_quant %>% mutate(Meat.Veg = 
+                                                ifelse(str_detect(Item.Name, "Pork"),
+                                                       "Meat", Meat.Veg))
+name_and_quant <- name_and_quant %>% mutate(Meat.Veg = 
+                                                ifelse(str_detect(Item.Name, "Lamb"),
+                                                       "Meat", Meat.Veg))
+name_and_quant <- name_and_quant %>% mutate(Meat.Veg = 
+                                                ifelse(str_detect(Item.Name, "Goat"),
+                                                       "Meat", Meat.Veg))
+name_and_quant <- name_and_quant %>% mutate(Meat.Veg = 
+                                                ifelse(str_detect(Item.Name, "Prawn"),
+                                                       "Meat", Meat.Veg))
+name_and_quant <- name_and_quant %>% mutate(Meat.Veg = 
+                                                ifelse(str_detect(Item.Name, "Meat"),
+                                                       "Meat", Meat.Veg))
+```
+
+```{r, plot visualization, include=FALSE}
+library(ggplot2)
+library(plotly)
+
+#name_and_quant$
+
+p <- name_and_quant %>%
+  ggplot( aes(Product.Price, Total.Quantity, color=Meat.Veg, label=Item.Name) ) +
+  geom_jitter() +
+  theme_bw() + 
+  ggtitle("Items' Number of Orders by Price") +
+  xlab("Item Price") +
+  ylab("Total Number of Orders")
+```
+```{r}
+ggplotly(p)
+```
+
+
+### Background Information
+The item price is probably in pounds, since the data comes from a restaurant in London. I'm more interested in prices relative to each other than the prices themselves.  
+
+### Description of data source
+This dataset is from <https://www.kaggle.com/henslersoftware/19560-indian-takeaway-orders>. The set used has ~74000 rows containing information about an Indian restaurant's order history from 01-09-2015 to 12-07-2019.  
+
+Each row represents one order of one item. The columns included are order number, date ordered, item name, item price, quantity of item ordered, and total products in order.  
+
+### References/citations
+omg, i love stackoverflow! stackoverflow is my life...  
+
+### Reflections on project...
+**What ideas/suggestions from Claus Wilke helped shape your visualization?**  
+Wilke's scatterplot of birds' bill length against their skull size-- with color indicating the birds' sex -- gave me the idea to differentiate between meat/non-meat dishes with color. As a sometime vegetarian, I'm interested in comparing the price and popularity of these two groups!  
+  
+**Is there anything more you wish you could do with this data?**   
+YES. I wish I could do cooler things with it.  
+I'm still a noob when it comes to graphics and visualizations. This source had data for a whole other restaurant, and I wish I could have compared the two venues somehow. I also wish I could have made my graph look cooler!  
+Also, I wish I knew what all the names of the dishes meant. I'm not super familiar with Indian food, so it's entirely possible I missed some meat dishes because I didn't know what words to look for.  
+AND FINALLY! I wish I could have gotten my tag_as_meat() function working. Because of time constraints, I ended up using repetitive code to check for each individual meat word. :'(  
+  
+**What were the most interesting or frustrating technical aspects of doing this?**   
+The most interesting aspect was deciding which comparisons I wanted to make, and how I would represent them visually.  
+The most frustrating aspect was definitely wrangling the data. Writing an example row from the "end goal" dataset helped... but getting there took quite the struggle!  
