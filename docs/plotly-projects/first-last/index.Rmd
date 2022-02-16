@@ -1,0 +1,94 @@
+---
+title: "UFO Sightings"
+author: "Daniel Kwik"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(plotly)
+library(dplyr)
+library(lubridate)
+```
+
+
+### Read in Data
+I got the data from a Kaggle website ( https://www.kaggle.com/NUFORC/ufo-sightings)
+```{r cars}
+ufos_raw = read_csv("ufos-scrubbed.csv") %>% 
+  filter(country == "us")
+head(ufos_raw)
+
+#Data transformation
+ufos_raw$comments <- str_wrap(ufos_raw$comments, 50)
+ufos_raw$year <-format(as.Date(ufos_raw$datetime,format="%m/%d/%Y"),"%Y")
+ufos_raw$month <-format(as.Date(ufos_raw$datetime,format="%m/%d/%Y"),"%Y/%m")
+
+#Select just the data needed
+ufos <- ufos_raw %>% 
+  filter(year >= '2000') %>% 
+  select(c(datetime, latitude, longitude, month, comments, state, city))
+ufos
+
+```
+
+```{r}
+Sys.setenv('MAPBOX_TOKEN' = 'pk.eyJ1IjoiZGt3aWsiLCJhIjoiY2t6bm0zaXNsMjFleTJucGE4MXQ0a2x5ZCJ9.d3zS2uGrfhj_ZZ2-WNDNMg')
+```
+
+## Plot of UFOs sightings animated from 2000 onwards
+```{r}
+
+ufos %>% 
+  plot_mapbox(frame = ~month) %>% #frame creates animation
+  layout(
+    mapbox = list(
+      style = "dark", #changes map style
+      zoom = 2.4, 
+      center = list(lat = 37, lon = -95) #centers on USA
+    )
+  ) %>% 
+  add_markers(
+    x = ~longitude, 
+    y = ~latitude,
+    marker = list(size = 3, color = "#FFFFCC", opacity = 0.4), #creates glyph aesthetic
+    #text = ~paste("Date:", datetime,"<br>Report:", comments),
+    #textposition = "auto",
+    #hoverlabel = list(align = "left"),
+    #hoverinfo = "text"
+  ) %>% 
+  animation_opts(100) #sets the number of milliseconds per frame 
+```
+## Plot of UFO sightings cumulative from 2000.
+
+```{r}
+ufos %>% 
+  plot_mapbox() %>% 
+  layout(
+    mapbox = list(
+      style = "dark", 
+      zoom = 2.4, 
+      center = list(lat = 37, lon = -95)
+    )
+  ) %>% 
+  add_markers(
+    x = ~longitude, 
+    y = ~latitude,
+    marker = list(size = 2, color = "#FFFFCC", opacity = 0.2),
+    text = ~paste("<b>Date/Time:</b>", datetime,"<br><b>Report:</b>", comments, "<br><b>City/State:</b>", city, ",", state),
+    textposition = "auto",
+    hoverlabel = list(align = "left"),
+    hoverinfo = "text"
+  ) 
+```
+
+## Reflection
+I was quite frustrated about the animation. There were moments when the animation would jitter crazily when I made the frame rate higher. In order to make the animation smoother, I had to cut down the number of years it scrubbed through as well as lower the frame rate. Lots of tweaking to figure out what works.
+I implemented the use of color and lightness in Wilke's book to convey density in geospatial data. Since UFOs are often seen at night, I made the map background dark, and used light glyphs to emphasize higher intensity/concentration of sightings.
+The story I am telling through this visualization is the increasing number and concentration of UFO sighting reports across the years. The animation and visualization also helps us see concentrations of regions that report sightings regularly.
+
+
