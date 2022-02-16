@@ -1,5 +1,5 @@
 ---
-title: "Star Wars Lego"
+title: "Lego Star Wars"
 date: "Spring 2022"
 author: "Luca Seazzu"
 output: html_document
@@ -61,7 +61,7 @@ highlight(
 
 ```
 
-# Lego Visualization
+## Lego Visualization
 
 ```{r vis2}
 lego_plot <- base %>%
@@ -81,7 +81,7 @@ subplot(lego_plot, time_series, widths = c(.2, .8), titleX = TRUE) %>%
   highlight(on = "plotly_selected", dynamic = TRUE, selectize = TRUE, persistent = TRUE)
 ```
 
-# Lego Set Data
+## Lego Data Set
 
 ```{r}
 head(lego_wrangle)
@@ -89,11 +89,11 @@ head(lego_wrangle)
 
 From https://www.kaggle.com/rtatman/lego-database/version/1?select=themes.csv and was made merging themes.csv and sets.csv while filtering by themes containing 'Star Wars'
 
-# References
+## References
 
 https://plotly-r.com/index.html
 
-# Reflection
+## Reflection
 
 The ideas and suggestions from Claus Wilke's helped shaped my visualization in that originally I was trying to create a visualization that would show all of the sets within Lego themes across the years. However, that quickly became cluttered and too hard to gain any meaningful information out of. Thus I went down the route of looking into only Star Wars themes and the code was built that it is easy to modify to look into any particular sets and compare.
 
