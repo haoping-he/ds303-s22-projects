@@ -114,3 +114,16 @@ plot_ly(mi_cases_by_day,x = ~Date) %>%
   ) 
 ```
 
+### Reflection
+
+##### What ideas/suggestions from Claus Wilke’s helped shape your visualization?
+
+Storytelling/comparison drove what I was after. Here, I'm trying to show how COVID deaths follow COVID cases, and choices made in this visualization are made to show that comparison.
+
+##### Is there anything more you wish you could do with this data?
+
+Nothing. I wish I could have made cases and deaths more distinguishable on the plot, but plotly created lots of frustrations in differentiating the two. 
+
+##### What were the most interesting or frustrating technical aspects of doing this?
+
+As mentioned before, making more clear the difference between deaths and cases would have been nice. 
