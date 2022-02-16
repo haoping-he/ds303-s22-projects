@@ -1,5 +1,5 @@
 ---
-title: "Adam's Data-303 Visualization Project"
+title: "Global Diet Carbon Footprint"
 author: "Adam Ritsema"
 date: "Spring 2022"
 output: html_document
