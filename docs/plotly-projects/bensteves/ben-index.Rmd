@@ -1,0 +1,201 @@
+---
+title: "Plotly Project: World Energy Consumption and Climate"
+author: "Ben Steves"
+date: "Spring 2022"
+output: html_document
+knit: (
+  function(inputFile, encoding) { 
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      output_file = 'index.html') })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+require(plotly)
+require(tidyverse)
+require(grid)
+require(htmltools)
+require(gridExtra)
+require(mosaic)
+```
+
+## Read in data
+
+The data I used comes from WorldBank.org, which has a great variety of measures for each country pertaining to climate, energy consumption, land use, socioeconomic factors, and population trends. 
+
+Country codes data comes from: https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes/blob/master/all/all.csv
+Climate data is from WorldBank.org, found here https://data.worldbank.org/topic/19
+
+```{r read data}
+world_climate <- read.csv("world_climate_data.csv") %>% janitor::clean_names()
+alpha3codes <- read.csv("alphacodes.csv") %>% janitor::clean_names()
+```
+
+## Data Tidying
+
+Removing extra dates, using pivot_longer for year columns, change date values, round up measure.
+
+```{r tidying climate}
+world_climate <- world_climate %>%
+  select(1:4, x1960:x2020) %>%
+  pivot_longer(cols = starts_with("x"), names_to = "year", values_to = "measure") %>%
+  filter(!is.na(measure)) %>%
+  mutate(year = sub('x', '', year),
+         measure = round(measure, 2))
+
+world_climate <- world_climate %>%
+  left_join(alpha3codes, by = c("country_code" = "alpha_3"))
+```
+
+## US CO2 Consumption by Fuel Type
+
+```{r}
+us_co2 <- world_climate %>%
+  filter(country_code == 'USA', 
+         indicator_code %in% c("EN.ATM.CO2E.SF.KT", 
+                               "EN.ATM.CO2E.LF.KT", 
+                               "EN.ATM.CO2E.GF.KT")) %>%
+   mutate(indicator_code_labelled = fct_recode(indicator_code, 
+                                               `Solid Fuel (Coal)` = "EN.ATM.CO2E.SF.KT",
+                                               `Liquid Fuel (Petroleum)` = "EN.ATM.CO2E.LF.KT",
+                                               `Gaseous Fuel (Natural Gas)` = "EN.ATM.CO2E.GF.KT"))
+
+plot_ly(data=us_co2, 
+        x=~year, 
+        y=~measure, 
+        color=~indicator_code_labelled, 
+        type="scatter", 
+        mode="lines") %>%
+  layout(title = "USA CO2 Consumption - Fuel Outputs",
+         yaxis = list(title = "CO2 Emissions (kt)"),
+         xaxis = list(title = "Year", tickangle=45, tickfont = list(size=10)),
+         legend = list(x = 0.8, y = 0.1))
+```
+
+## Percent of People Affected by Natural Disasters
+
+```{r include = FALSE}
+nd_pcts <- world_climate %>%
+  filter(indicator_code == "EN.CLC.MDAT.ZS") %>%
+  group_by(region, sub_region) %>%
+  summarize(avg_perc = mean(measure)) %>%
+  arrange(desc(avg_perc))
+
+plot_ly(data=nd_pcts,
+  type = "bar",
+  x = ~fct_reorder(sub_region, region),
+  y = ~avg_perc, 
+  color = ~region) %>%
+  layout(title = "Percent of Population Affected by Natural Disasters, 1990-2009",
+         yaxis = list(title = "Percent Affected"),
+         xaxis = list(title = "Sub-region", tickfont = list(size=10)))
+  #hovertemplate = "Region %{label}<br>Percentage: %{value}<extra></extra>")
+```
+
+## Choropleth Maps
+
+Will just be looking at North and South American countries - this dataset has 3 letter country codes, and the values filtered for below will be applied to a filter in the climate dataset.
+
+```{r tidying alpha codes}
+alpha3codes <- alpha3codes %>%
+  filter(region == "Americas") %>%
+  select(alpha_3)
+
+alpha3list <-  as.list(as.data.frame(t(alpha3codes)))
+
+world_climate <- world_climate %>%
+  filter(country_code %in% alpha3list)
+```
+
+```{r display maps function}
+# Display a map for whatever year and indicator 
+show_maps <- function(df, id_code, map_title, years, color, b) {
+  
+     temp_df <- df %>% 
+       filter(indicator_code == id_code)
+    
+     year <- df$year[1]
+     
+    title <- paste(map_title, year, sep=', ')
+    plot_ly(type='choropleth', locations=temp_df$country_code,
+                z=temp_df$measure, text=temp_df$country_name, colorscale=color
+            , reversescale = b) %>%
+        layout(title = title)
+}
+```
+
+### CO2 Gas emissions
+
+```{r}
+years <- list("1997", "2007", "2017")
+
+df1997 <- world_climate %>% filter(year == years[[1]])
+df2007 <- world_climate %>% filter(year == years[[2]])
+df2017 <- world_climate %>% filter(year == years[[3]])
+
+df_list <- list(df1997, df2007, df2017)
+
+id_code1 = "EN.ATM.GHGT.KT.CE"
+map_title1 = "Total greenhouse gas emissions (kt of CO2 equivalent)"
+output1 <- tagList(lapply(df_list, show_maps, id_code=id_code1, 
+                  map_title=map_title1, years=years, color="Reds", b=F))
+output1
+
+"SP.POP.TOTL"
+
+
+```
+
+### Renewable Electricity Output
+
+```{r}
+id_code2 = "EG.FEC.RNEW.ZS"
+map_title2 = "Total amount of electricity from renewable energy sources (% total)"
+output2 <-tagList(lapply(df_list, show_maps, id_code=id_code2, 
+                  map_title=map_title2, years=years, color="RdBu", b= F))
+output2
+```
+
+## Tabular View - Renewable Energy Output
+
+```{r}
+elec_perc <- world_climate %>%
+  filter(year %in% years, 
+         indicator_code == id_code2) %>%
+          pivot_wider(names_from = year, values_from = measure) %>%
+          select(country_name, `1997`, `2007`, `2017`) %>%
+          filter(!is.na(`1997`)) %>%
+          rename(Country = "country_name")
+
+elec_perc_cond <- elec_perc %>%
+   mutate(highlight = ifelse(`2017` >= 25.0 |
+                              `1997` >= 25.0 |
+                               `2007` >= 25.0, "#90EE90", "white"))
+
+
+plot_ly(data=elec_perc,
+        type='table',
+       # columnorder = c(1,2,3,4),
+        columnwidth = c(10, 10, 10, 10),
+        header = list(
+          values = c(names(elec_perc)),
+          align = c('left', rep('center', ncol(elec_perc))),
+          line = list(width = 1, color = 'black'),
+          fill = list(color = 'rgb(45, 112, 230)'),
+          font = list(family = "Arial", size = 14, color = "white")
+        ),
+        cells = list(values=
+                       rbind( t(as.matrix(unname(elec_perc)))),
+                       align = c('left', rep('center', ncol(elec_perc))),
+                      line = list(color = "black", width = 1),
+                      fill = list(color = list('rgb(176, 200, 232)', elec_perc_cond$highlight)),
+                      font = list(family = "Arial", size = 12, color = c("black"))
+                     )
+        
+        )
+```
+
+
+
