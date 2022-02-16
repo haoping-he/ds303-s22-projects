@@ -3,6 +3,12 @@ title: "Red Project Grand Rapids - plotly Project"
 author: "Sonali Bola" 
 date: "February 16th, 2022" 
 output: html_document
+knit: (
+  function(inputFile, encoding) { 
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      output_file = 'index.html') })
 ---
 
 ```{r setup, include=FALSE}
