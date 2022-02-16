@@ -17,7 +17,8 @@ knitr::opts_chunk$set(echo = TRUE, fig.height = 5.5, fig.width = 9.5)
 library(plotly)
 ```
 
-```{r import, include=FALSE}
+## Import Data
+```{r import, include=TRUE}
 # import data
 data <- read.csv("USA_GDP_Annual.csv")
 ```
@@ -39,9 +40,19 @@ data <- data %>% mutate(
 )
 ```
 
-## My Visualization
+## My Visualizations
 ```{r, echo=FALSE}
-my_viz <- data %>%
+my_viz1 <- data %>%
+  plot_ly() %>%
+  add_trace(x = ~Year, y = ~GDP, type = "scatter", mode = "lines", fill = "tozeroy", fillcolor = "rgba(168, 216, 234, 0.5)") %>%
+  layout(title = list(text = "GDP by Year", font = list(size = 22), y = 0.99),
+         yaxis = list(title = "GDP (millions of USD)"),
+         xaxis = list(rangeslider = list(type = "date")))
+
+my_viz1
+```
+```{r, echo=FALSE}
+my_viz2 <- data %>%
   plot_ly() %>%
   add_trace(type = "bar", x = ~Year, y = ~Consumption.prop, name = "Consumption", text = ~Consumption, textposition = "none",
             hovertemplate = '<b>Year</b>: %{x}<br><b>Proportion</b>: %{y:.4f}<br><b>Value</b>: $%{text}<br><i>(value in millions of USD)</i>') %>%
@@ -63,20 +74,22 @@ my_viz <- data %>%
                                  ))),
          colorway = c("#5a46d2", "#b36b00", "#ff005a", "#32aa00"))
 
-my_viz
+my_viz2
 ```
+
+### Background Information
 The Gross Domestic Product (GDP) of a country has *four components*: private consumption (private spending on goods and services), investment, net exports (total exports minus total imports), and government spending (public spending on goods and services).
 
-On the plot, each of the four components are shown for each year as a proportion of the whole GDP. For a given year, the four proportions *add up to one*.
+On the second plot, each of the four components are shown for each year as a proportion of the whole GDP. For a given year, the four proportions *add up to one*.
 
 Notice that net exports is sometimes negative. This means that, in that year, the value of the imports into the USA was greater than the value of the exports out of the USA, otherwise known as a *trade deficit*.
 
 ## Data Source
-The data was collected by the United States *Bureau of Labor Statistics*.
+The data was collected by the United States *Bureau of Labor Statistics*. It was downloaded from the United States *Bureau of Economic Analysis* website, [here](https://apps.bea.gov/iTable/iTable.cfm?reqid=19&step=2).
 
 ## Reflection
 One idea from Wilke's book that I took into consideration was Chapter 10 on visualizing proportions. My original idea for this data was to show a pie chart for each year. However, I realized that that wouldn't be the best idea in this situation. I also considered using stacked bars instead of grouped bars. This was not feasible due to net exports being negative for many of the years.
 
-An additional thing that I would like to do with this data is show how total nominal GDP changed over this time period. I was able to put the nominal value in the tooltip for each data point, in addition to the proportion. However, in sticking to just one visualization, I couldn't show this graphically. You would see that the nominal GDP of the USA has risen exponentially over the last 90 years or so.
+An additional thing that I would like to do with this data is to make similar visualizations for the real GDP, rather than just the nominal GDP. Real GDP adjusts the GDP for inflation because, of course, prices have increased signficantly since 1929, the first year of the data.
 
 One technical challenge that I had was creating the buttons. It was difficult to get them in the right spot and to have them change the right aspects of the plot. In general, placement of the different objects on the plot was a bit weird. The scale for *x* and *y* arguments in Plotly is [-2, 3]. I'd like to hear the rationale for that scale.
