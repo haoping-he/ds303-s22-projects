@@ -1,0 +1,77 @@
+---
+title: "lego-vis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(plotly)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r lego}
+lego_themes <- read_csv("data/themes.csv")
+lego_sets <- read_csv("data/sets.csv")
+```
+```{r}
+head(lego_themes)
+head(lego_sets)
+```
+```{r}
+lego <- merge(lego_themes, lego_sets, by.x ="id", by.y ="theme_id", all.x = TRUE, all.y = FALSE)
+```
+
+```{r}
+head(lego)
+lego_wrangle <- lego %>%
+  group_by(name.x, year) %>%
+  filter(grepl('Star Wars', name.x)) %>%
+  summarise(n=n())
+lego_wrangle
+```
+
+
+```{r}
+lego_highlight <- highlight_key(lego_wrangle, ~name.x)
+
+base <- plot_ly(lego_highlight, color = I("black")) %>%
+  group_by(name.x)
+
+time_series <- base %>%
+  group_by(name.x) %>%
+  add_lines(x = ~year, y = ~n)
+
+highlight(
+  time_series, 
+  on = "plotly_click", 
+  selectize = TRUE, 
+  dynamic = TRUE, 
+  persistent = TRUE
+)
+
+```
+
+```{r}
+lego_plot <- base %>%
+  summarise(sum = sum(n)) %>%
+  add_markers(
+    x= ~sum, 
+    y = ~fct_reorder(name.x, sum),
+    hoverinfo = "x+y"
+  ) %>%
+  layout(
+    xaxis = list(title = "Year"),
+    yaxis = list(title = "Number of Lego Sets")
+  ) 
+
+subplot(lego_plot, time_series, titleX = TRUE) %>%
+  layout(showlegend = FALSE) %>%
+  highlight(on = "plotly_selected", dynamic = TRUE, selectize = TRUE, persistent = TRUE)
+```
+
