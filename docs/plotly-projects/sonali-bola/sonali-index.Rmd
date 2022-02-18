@@ -1,0 +1,110 @@
+---
+title: "Red Project Grand Rapids - plotly Project"
+author: "Sonali Bola" 
+date: "February 16th, 2022 - DATA" 
+output: html_document
+knit: (
+  function(inputFile, encoding) { 
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      output_file = 'index.html') })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(mosaic) 
+library(plotly)
+```
+
+## About the data: 
+This data is from Red Project Grand Rapids, which is an NGO that strives to provide better health choices related to sexual activity and drug use, without judgement and without fear. They provide health resource to prevent the spread of disease, and save lives
+Last semester I got a chance to work with them to come up with some deliverables that showed patterns in the data that they recorded. The deliverables that we provided will be used as evidence and support to bring resources to communities that lack it. 
+
+## Data: 
+```{r, include = FALSE}
+rp_raw <- read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTC3DmH_qt8vUg_WuWgSlfskPljYA-g_wlOfmpoXHJGUDIx_k2NHO4rwPh28QffW_govFRjAxFVjFxp/pub?gid=0&single=true&output=csv")
+
+rp <- rp_raw %>%
+  select(-"INCIDENT.NUMBER", -"NAME", -"INCIDENT.ADDRESS",  -"PHONE.NUMBER", -"RESIDENT.ADDRESS", -"EMESIS", -"COMBATIVE", -"DISCOMFORT", -"OTHER", -"ADDITIONAL.NOTES.FROM.REPORTS", -"SUD.SERVICES", -"MAT.SERVICES", -"HEALTH.INSURANCE", -"GENERAL.MEDICAL.SERVICES", -"HOUSING.RESOURCES", 
+- "FOOD.RESOURCES", -"TRANSPORTATION.RESOURCES", -"OCCUPATIONAL.SERVICES", -"GENERAL.FOLLOW.UP.NOTES")
+
+rp <- rp%>%
+  filter(GENDER %in% c('M', 'F', 'UNK'))
+```
+
+```{r, include = FALSE}
+hotspot <- rp %>%
+  group_by(INCIDENT.CITY, SYRINGE.ACCESS.SERVICES, INCIDENT.ZIP.CODE)%>%
+  summarize(total = n())%>%
+  arrange(desc(total))
+```
+
+#### Syringe access services by overdoses
+
+Last project with Red Project GR focused on overdoses by zipcodes and cities, so I was curious how the number of overdoses looked through the lens of syringe access services. 
+
+```{r}
+plot_ly(hotspot, x = ~SYRINGE.ACCESS.SERVICES, y = ~total) %>%
+  add_boxplot()
+```
+
+#### Syringe access by Gender
+
+Another facet: *gender* 
+```{r}
+gender <- rp %>%
+  group_by(GENDER, SYRINGE.ACCESS.SERVICES)%>%
+  summarize(total = n())%>%
+  arrange(desc(total))
+```
+
+```{r}
+plot_ly(gender, x = ~SYRINGE.ACCESS.SERVICES, y = ~total, color = ~GENDER) %>%
+  add_bars() 
+
+plot_ly(gender, x = ~SYRINGE.ACCESS.SERVICES, y = ~total, color = ~GENDER) %>%
+  add_bars() %>%
+  layout(barmode = "stack")
+```
+
+#### Syringe access by Race
+
+Another facet: *race* 
+```{r}
+race <- rp %>%
+  group_by(RACE, SYRINGE.ACCESS.SERVICES)%>%
+  summarize(total = n())%>%
+  arrange(desc(total))
+
+race$RACE[race$RACE == 'WHTE'] <- 'WHITE'
+```
+
+
+```{r}
+plot_ly(race, x = ~SYRINGE.ACCESS.SERVICES, y = ~total, color = ~RACE) %>%
+  add_bars() 
+
+plot_ly(race, x = ~SYRINGE.ACCESS.SERVICES, y = ~total, color = ~RACE) %>%
+  add_bars() %>%
+  layout(barmode = "stack")
+```
+
+**Abbreviations of the types of Syringe Access Services**
+
+IN: incomplete, was unable to contact them and connect them with services 
+
+R = refuse, did not want services 
+
+SNA = only used if person did not survive 
+
+EST = already a participant in their program or another receiving services 
+
+**Reflection:**
+
+- I think Claus Wilke's book was very resources it terms of making a graph in plotly, his explanations on bar graphs and histograms helped me to understand that when learning something starting small is okay. So I tried to start small using bar graphs and boxplots. 
+
+- I think this dataset played a major role for me to unlearn the stigma around drug use and victims who are suffering from it. This project is how I learned about the existence about syringe access services. Which are stigmatized as well. I think pairing this data with more evidence can be helpful in getting more resources in more communities
+
+- One of the major frustations I had working with plotly is that I couldn't figure out how to rename to labels and tiny details as such. Because I have so much experience with `ggplot2` and `ggformula` I kind of expected it to work like those packages, but it is doesn't, so it is encouraging to learn the "new" functionality of plotly. 
