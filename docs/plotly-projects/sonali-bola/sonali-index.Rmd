@@ -23,7 +23,7 @@ This data is from Red Project Grand Rapids, which is an NGO that strives to prov
 Last semester I got a chance to work with them to come up with some deliverables that showed patterns in the data that they recorded. The deliverables that we provided will be used as evidence and support to bring resources to communities that lack it. 
 
 ## Data: 
-```{r}
+```{r, include = FALSE}
 rp_raw <- read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTC3DmH_qt8vUg_WuWgSlfskPljYA-g_wlOfmpoXHJGUDIx_k2NHO4rwPh28QffW_govFRjAxFVjFxp/pub?gid=0&single=true&output=csv")
 
 rp <- rp_raw %>%
@@ -34,7 +34,7 @@ rp <- rp%>%
   filter(GENDER %in% c('M', 'F', 'UNK'))
 ```
 
-```{r}
+```{r, include = FALSE}
 hotspot <- rp %>%
   group_by(INCIDENT.CITY, SYRINGE.ACCESS.SERVICES, INCIDENT.ZIP.CODE)%>%
   summarize(total = n())%>%
