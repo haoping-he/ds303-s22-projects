@@ -7,7 +7,7 @@ output:
 params: 
   show_code: 
     label: "Show code"
-    value: true
+    value: false
 knit: (function(inputFile, encoding) {
     show_code <- rmarkdown::yaml_front_matter(inputFile)$params$show_code$value;
     outfile <- if (show_code) "show-code-index.html" else "index.html";
@@ -22,8 +22,6 @@ knit: (function(inputFile, encoding) {
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = params$show_code,
                       fig.height = 5.5, fig.width = 9.5)
-
-library(plotly)
 ```
 
 ```{block include = ! params$show_code, echo = TRUE}
@@ -32,10 +30,17 @@ A version of this page showing code is available [here](show-code-index.html).
 ```
 
 ```{block include = params$show_code, echo = TRUE}
+## Setup
+```
+```{r libraries, message=FALSE}
+library(plotly)
+```
+
+```{block include = params$show_code, echo = TRUE}
 ## Import Data
 ```
 ```{r import}
-# import data
+# import data (from local .csv file)
 data <- read.csv("USA_GDP_Annual.csv")
 ```
 
@@ -43,7 +48,7 @@ data <- read.csv("USA_GDP_Annual.csv")
 ## Data Wrangling
 ```
 ```{r}
-# remove commas & convert to numeric
+# remove commas & convert columns of interest to numeric
 data$GDP <- as.numeric(gsub("," ,"" , data$GDP))
 data$Consumption <- as.numeric(gsub("," ,"" , data$Consumption))
 data$Investment <- as.numeric(gsub("," ,"" , data$Investment))
@@ -51,7 +56,7 @@ data$Net.Exports <- as.numeric(gsub("," ,"" , data$Net.Exports))
 data$Government.Spending <- as.numeric(gsub("," ,"" , data$Government.Spending))
 ```
 ```{r}
-# add proportion of consumption, investment, net exports, and government spending
+# add proportion of each component to data frame
 data <- data %>% mutate(
   Consumption.prop = Consumption / GDP,
   Investment.prop = Investment / GDP,
@@ -71,36 +76,52 @@ Notice that net exports is sometimes negative. This means that, in that year, th
 ```{r}
 my_viz1 <- data %>%
   plot_ly() %>%
-  add_trace(x = ~Year, y = ~GDP, type = "scatter", mode = "lines",
-         fill = "tozeroy", fillcolor = "rgba(168, 216, 234, 0.5)") %>%
-  layout(title = list(text = "GDP by Year", font = list(size = 22), y = 0.99),
-         yaxis = list(title = "GDP (millions of USD)"),
+  # add GDP line
+  add_trace(x = ~Year, y = ~GDP, type = "scatter", mode = "lines", name = "Nominal GDP\nBy Year",
+         # fill under the curve
+         fill = "tozeroy", fillcolor = "rgba(168, 216, 234, 0.5)",
+         # customize tooltip
+         hovertemplate = '<b>Year</b>: %{x}<br><b>NGDP</b>: $%{y}<br><i>(value in millions of USD)</i>') %>%
+  # title, y-axis label, x-axis range slider
+  layout(title = list(text = "Nominal GDP by Year", font = list(size = 22), y = 0.99),
+         yaxis = list(title = "Nominal GDP (millions of USD)"),
          xaxis = list(rangeslider = list(type = "date")))
 
+# display plot
 my_viz1
 ```
 ```{r}
 my_viz2 <- data %>%
   plot_ly() %>%
+  # add Consumption bars/lines
   add_trace(type = "bar", x = ~Year, y = ~Consumption.prop, name = "Consumption", 
+            # customize tooltip
             text = ~Consumption, textposition = "none",
             hovertemplate = paste0('<b>Year</b>: %{x}<br><b>Proportion</b>: %{y:.4f}<br><b>Value</b>:',
                                    ' $%{text}<br><i>(value in millions of USD)</i>')) %>%
+  # add Investment bars/lines
   add_trace(type = "bar", x = ~Year, y = ~Investment.prop, name = "Investment", 
+            # customize tooltip
             text = ~Investment, textposition = "none",
             hovertemplate = paste0('<b>Year</b>: %{x}<br><b>Proportion</b>: %{y:.4f}<br><b>Value</b>:',
                                    ' $%{text}<br><i>(value in millions of USD)</i>')) %>%
+  # add Net Exports bars/lines
   add_trace(type = "bar", x = ~Year, y = ~Net.Exports.prop, name = "Net Exports", 
+            # customize tooltip
             text = ~Net.Exports, textposition = "none",
             hovertemplate = paste0('<b>Year</b>: %{x}<br><b>Proportion</b>: %{y:.4f}<br><b>Value</b>:',
                                    ' $%{text}<br><i>(value in millions of USD)</i>')) %>%
+  # add Gov Spending bars/lines
   add_trace(type = "bar", x = ~Year, y = ~Government.Spending.prop, name = "Government Spending",
+            # customize tooltip
             text = ~Government.Spending, textposition = "none",
             hovertemplate = paste0('<b>Year</b>: %{x}<br><b>Proportion</b>: %{y:.4f}<br><b>Value</b>:',
                                    ' $%{text}<br><i>(value in millions of USD)</i>')) %>%
-  layout(title = list(text = "Components of GDP by Year", font = list(size = 22), y = 0.99), 
+  # title, y-axis label, x-axis range slider
+  layout(title = list(text = "Components of Nominal GDP by Year", font = list(size = 22), y = 0.99), 
          yaxis = list(title = "Proportion of GDP"),
          xaxis = list(rangeslider = list(type = "date")),
+         # add buttons for bar vs line
          updatemenus = list(list(type = "buttons", direction = "right", x = 0.79, y = 0.98,
                                  buttons = list(
                                    list(method = "restyle", args = list("type", "bar"), 
@@ -108,8 +129,10 @@ my_viz2 <- data %>%
                                    list(method = "restyle", args = list("type", "lines"), 
                                         label = "Line Chart")
                                  ))),
+         # customize colors of the four traces
          colorway = c("#5a46d2", "#b36b00", "#ff005a", "#32aa00"))
 
+# display plot
 my_viz2
 ```
 
