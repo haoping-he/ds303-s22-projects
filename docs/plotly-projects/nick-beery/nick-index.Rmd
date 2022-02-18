@@ -1,28 +1,48 @@
 ---
-title: "Nick's Graphic"
+title: "USA Historical GDP"
 author: "Nick Beery"
 date: "Spring 2022"
-output: html_document
-knit: (
-  function(inputFile, encoding) { 
+output: 
+  html_document: default
+params: 
+  show_code: 
+    label: "Show code"
+    value: true
+knit: (function(inputFile, encoding) {
+    show_code <- rmarkdown::yaml_front_matter(inputFile)$params$show_code$value;
+    outfile <- if (show_code) "show-code-index.html" else "index.html";
     rmarkdown::render( 
       input       = inputFile, 
       encoding    = encoding, 
-      output_file = 'index.html') })
+      output_file = outfile
+    )
+  })
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, fig.height = 5.5, fig.width = 9.5)
+knitr::opts_chunk$set(echo = params$show_code,
+                      fig.height = 5.5, fig.width = 9.5)
 
 library(plotly)
 ```
 
+```{block include = ! params$show_code, echo = TRUE}
+### Want to see the code?
+A version of this page showing code is available [here](show-code-index.html).
+```
+
+```{block include = params$show_code, echo = TRUE}
 ## Import Data
-```{r import, include=TRUE}
+```
+```{r import}
 # import data
 data <- read.csv("USA_GDP_Annual.csv")
 ```
-```{r, include=FALSE}
+
+```{block include = params$show_code, echo = TRUE}
+## Data Wrangling
+```
+```{r}
 # remove commas & convert to numeric
 data$GDP <- as.numeric(gsub("," ,"" , data$GDP))
 data$Consumption <- as.numeric(gsub("," ,"" , data$Consumption))
@@ -30,7 +50,7 @@ data$Investment <- as.numeric(gsub("," ,"" , data$Investment))
 data$Net.Exports <- as.numeric(gsub("," ,"" , data$Net.Exports))
 data$Government.Spending <- as.numeric(gsub("," ,"" , data$Government.Spending))
 ```
-```{r, include=FALSE}
+```{r}
 # add proportion of consumption, investment, net exports, and government spending
 data <- data %>% mutate(
   Consumption.prop = Consumption / GDP,
@@ -40,28 +60,44 @@ data <- data %>% mutate(
 )
 ```
 
+## Background Information
+The Gross Domestic Product (GDP) of a country has *four components*: private consumption (private spending on goods and services), investment, net exports (total exports minus total imports), and government spending (public spending on goods and services).
+
+On the second plot, each of the four components are shown for each year as a proportion of the whole GDP. For a given year, the four proportions *add up to one*.
+
+Notice that net exports is sometimes negative. This means that, in that year, the value of the imports into the USA was greater than the value of the exports out of the USA, otherwise known as a *trade deficit*.
+
 ## My Visualizations
-```{r, echo=FALSE}
+```{r}
 my_viz1 <- data %>%
   plot_ly() %>%
-  add_trace(x = ~Year, y = ~GDP, type = "scatter", mode = "lines", fill = "tozeroy", fillcolor = "rgba(168, 216, 234, 0.5)") %>%
+  add_trace(x = ~Year, y = ~GDP, type = "scatter", mode = "lines",
+         fill = "tozeroy", fillcolor = "rgba(168, 216, 234, 0.5)") %>%
   layout(title = list(text = "GDP by Year", font = list(size = 22), y = 0.99),
          yaxis = list(title = "GDP (millions of USD)"),
          xaxis = list(rangeslider = list(type = "date")))
 
 my_viz1
 ```
-```{r, echo=FALSE}
+```{r}
 my_viz2 <- data %>%
   plot_ly() %>%
-  add_trace(type = "bar", x = ~Year, y = ~Consumption.prop, name = "Consumption", text = ~Consumption, textposition = "none",
-            hovertemplate = '<b>Year</b>: %{x}<br><b>Proportion</b>: %{y:.4f}<br><b>Value</b>: $%{text}<br><i>(value in millions of USD)</i>') %>%
-  add_trace(type = "bar", x = ~Year, y = ~Investment.prop, name = "Investment", text = ~Investment, textposition = "none",
-            hovertemplate = '<b>Year</b>: %{x}<br><b>Proportion</b>: %{y:.4f}<br><b>Value</b>: $%{text}<br><i>(value in millions of USD)</i>') %>%
-  add_trace(type = "bar", x = ~Year, y = ~Net.Exports.prop, name = "Net Exports", text = ~Net.Exports, textposition = "none",
-            hovertemplate = '<b>Year</b>: %{x}<br><b>Proportion</b>: %{y:.4f}<br><b>Value</b>: $%{text}<br><i>(value in millions of USD)</i>') %>%
-  add_trace(type = "bar", x = ~Year, y = ~Government.Spending.prop, name = "Government Spending", text = ~Government.Spending, textposition = "none",
-            hovertemplate = '<b>Year</b>: %{x}<br><b>Proportion</b>: %{y:.4f}<br><b>Value</b>: $%{text}<br><i>(value in millions of USD)</i>') %>%
+  add_trace(type = "bar", x = ~Year, y = ~Consumption.prop, name = "Consumption", 
+            text = ~Consumption, textposition = "none",
+            hovertemplate = paste0('<b>Year</b>: %{x}<br><b>Proportion</b>: %{y:.4f}<br><b>Value</b>:',
+                                   ' $%{text}<br><i>(value in millions of USD)</i>')) %>%
+  add_trace(type = "bar", x = ~Year, y = ~Investment.prop, name = "Investment", 
+            text = ~Investment, textposition = "none",
+            hovertemplate = paste0('<b>Year</b>: %{x}<br><b>Proportion</b>: %{y:.4f}<br><b>Value</b>:',
+                                   ' $%{text}<br><i>(value in millions of USD)</i>')) %>%
+  add_trace(type = "bar", x = ~Year, y = ~Net.Exports.prop, name = "Net Exports", 
+            text = ~Net.Exports, textposition = "none",
+            hovertemplate = paste0('<b>Year</b>: %{x}<br><b>Proportion</b>: %{y:.4f}<br><b>Value</b>:',
+                                   ' $%{text}<br><i>(value in millions of USD)</i>')) %>%
+  add_trace(type = "bar", x = ~Year, y = ~Government.Spending.prop, name = "Government Spending",
+            text = ~Government.Spending, textposition = "none",
+            hovertemplate = paste0('<b>Year</b>: %{x}<br><b>Proportion</b>: %{y:.4f}<br><b>Value</b>:',
+                                   ' $%{text}<br><i>(value in millions of USD)</i>')) %>%
   layout(title = list(text = "Components of GDP by Year", font = list(size = 22), y = 0.99), 
          yaxis = list(title = "Proportion of GDP"),
          xaxis = list(rangeslider = list(type = "date")),
@@ -76,13 +112,6 @@ my_viz2 <- data %>%
 
 my_viz2
 ```
-
-### Background Information
-The Gross Domestic Product (GDP) of a country has *four components*: private consumption (private spending on goods and services), investment, net exports (total exports minus total imports), and government spending (public spending on goods and services).
-
-On the second plot, each of the four components are shown for each year as a proportion of the whole GDP. For a given year, the four proportions *add up to one*.
-
-Notice that net exports is sometimes negative. This means that, in that year, the value of the imports into the USA was greater than the value of the exports out of the USA, otherwise known as a *trade deficit*.
 
 ## Data Source
 The data was collected by the United States *Bureau of Labor Statistics*. It was downloaded from the United States *Bureau of Economic Analysis* website, [here](https://apps.bea.gov/iTable/iTable.cfm?reqid=19&step=2).
