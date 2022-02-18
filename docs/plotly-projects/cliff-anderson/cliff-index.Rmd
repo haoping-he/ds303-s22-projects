@@ -1,0 +1,93 @@
+---
+title: "Netflix Prices Around the World"
+author: "Cliff Anderson"
+date: "Spring 2022"
+output: html_document
+knit: (
+  function(inputFile, encoding) { 
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      output_file = 'index.html') })
+---
+
+```{r, setup, include = FALSE}
+# load packages that are going to be used
+require(tidyverse)   # this loads mosaic, ggformula, etc. too
+require(ggformula)
+require(mosaic)
+require(plotly)
+
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+
+theme_set(theme_bw(base_size=12))     # change theme for ggplot2/ggformula
+
+knitr::opts_chunk$set(
+  echo = TRUE,      # for homework, always show R code (this is the default)
+  tidy = FALSE,     # display code as typed (rather than reformatted)
+  size = "small",   # slightly smaller font for code
+  message = FALSE, warning = FALSE) # don't print warnings or messages in compiled document. So you MUST check them in RStudio!
+```
+
+
+##### Background
+Sherlock Holmes series is taken out from Netflix USA, but still appears in Netflix from Indonesia. Because of this, I became curious on how many TV series/movies are on Netflix for different countries. In addition, I also realize that prices are different, depending on where you are. 
+
+Source: https://www.kaggle.com/prasertk/netflix-subscription-price-in-different-countries 
+
+```{r, echo = FALSE}
+df <- read.csv('https://raw.githubusercontent.com/plotly/datasets/master/2014_world_gdp_with_codes.csv')
+colnames(df) <- c('Country')
+
+df2 <- read.csv('netflix_price.csv')
+
+df3 <- merge(df, df2)
+
+#rename columns
+names(df3)[3] <- 'Code'
+names(df3)[7] <- 'Cost_basic'
+names(df3)[8] <- 'Cost_standard'
+names(df3)[9] <- 'Cost_premium'
+```
+
+
+
+
+
+```{r, echo = FALSE}
+fig <- plot_ly(df3, type='choropleth', locations=df3$Code, z=df3$Cost_basic, text=df3$Country, colorscale="Blues")
+
+# light grey boundaries
+l <- list(color = toRGB("grey"), width = 0.5)
+
+
+fig <- fig %>% colorbar(title = 'Cost (US$)', tickprefix = '$')
+fig <- fig %>% layout(
+    title = 'Netflix Monthly Basic Subscription<br> Source: <a href="https://www.kaggle.com/prasertk/netflix-subscription-price-in-different-countries">Kaggle</a>'
+  )
+fig
+```
+
+
+
+```{r, echo = FALSE}
+# scatter plot comparing price and library size
+fig2 <- plot_ly(data = df3, x = ~Cost_basic, y = ~Total.Library.Size,
+               # Hover text:
+               text = ~paste("Price: $", Cost_basic, '<br>Library Size:', Total.Library.Size, "<br>Country:", Country),
+               marker = list(size = 10,
+                             color = 'rgba(255, 182, 193, .9)',
+                             line = list(color = 'rgba(152, 0, 0, .8)',
+                                         width = 2)))
+
+fig2 <- fig2 %>% layout(title = 'Total Library Size vs Cost',
+         yaxis = list(zeroline = FALSE, title = 'Total Library Size (Movie + TV Show)'),
+         xaxis = list(zeroline = FALSE, title = 'Monthly Subscription Cost $'))
+
+fig2
+```
+
+##### Reflection
+In Chapter 15.3, Wilke suggested that for online viewing, dark-colored background areas may be preferable. This means that the higher the variable is, the lighter the color. I implemented this on my Chroropleth map. 
+One thing I wish I can do is have a filter bar. For example, filter countries whose price is less than $5. I also wish I can categorize the countries into groups of continents so that I can analyze the data that way. 
+  
