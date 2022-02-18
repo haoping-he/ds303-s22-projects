@@ -27,6 +27,12 @@ if (!py_module_available("openpyxl")) py_install("openpyxl")
 py_run_string("import pandas as pd; pd.options.display.max_columns = None")
 ```
 
+### Background
+
+I've been following COVID cases, deaths, and hospitalizations in Michigan & the US closely since the beginning of the pandemic. There's lots of data to work with, which provides lots of opportunities for data analysis and visualization. This particular visualization is quite simple, and plots cases and deaths as a function of time. Whats unique about this plot is that it can show how deaths usually follow cases by 3 or so weeks.
+
+The link for the data is scraped using Python, downloaded using R, cleaned/massaged in Python, and visualized in R's Plotly interface
+
 ### Get link for data:
 
 ```{python get-excel-link, results='hide'}
@@ -54,16 +60,16 @@ download.file(py$finallink, destfile = temp)
 mi_data <- readxl::read_excel(temp)
 ```
 
+This data set contains cumulative cases, new cases, cumulative deaths, and new deaths for each county for each date in roughly the last two years. For my visualization, I simply want total cases and deaths in the state, so the data is grouped by date and deaths and cases are summed. 
+
 ### Clean data:
 
 ```{python aggregate-data}
 mi_data = r.mi_data
-max_date = max(mi_data["Updated"])
 agg_data = mi_data.groupby(["Date"], as_index=False).sum()
 ```
 
 ```{r data-load}
-date_update = format(py$max_date, '%d %b %Y')
 mi_cases_by_day = py$agg_data
 head(mi_cases_by_day)
 ```
@@ -91,39 +97,40 @@ mi_cases_by_day <- mi_cases_by_day %>%
 
 
 ```{r message=FALSE}
-ay <- list(tickfont = list(color = "red"),
-  overlaying = "y",
-  side = "right",
-  title = "Deaths")
+ay <- list(overlaying = "y", side = "right", title = "Deaths")
 
 plot_ly(mi_cases_by_day,x = ~Date) %>% 
   # Cases
-  add_trace(y = ~Cases, alpha = .6, name = "Cases", type = "scatter", 
-            mode = 'markers') %>%
+  add_trace(y = ~Cases, alpha = .6, name = "Cases", type = "scatter",
+            color = I("coral1"), mode = 'markers') %>%
   # Cases MA
-  add_lines(y = ~cases_ma, alpha = .8, name = "Cases MA", mode = 'markers') %>%
+  add_lines(y = ~cases_ma, alpha = .8, name = "Cases MA", mode = 'markers',
+            color = I("coral1")) %>%
   # Deaths
   add_trace(name = "Deaths", yaxis = "y2", alpha = .15, y = ~Deaths, x = ~Date,
-            color = I("red"), type = "scatter", mode = 'markers') %>%
+            color = I("darkorchid1"), type = "scatter", mode = 'markers') %>%
   # Deaths MA
   add_lines(name = "Deaths MA", yaxis = "y2", y = ~deaths_ma, x = ~Date,
-            line = list(color = I("red")), alpha = .8/4, mode = 'markers') %>%
+            color = I("darkorchid1"), alpha = .8/4, mode = 'markers') %>%
   layout(
     title = "Michigan COVID Cases/Deaths<br>With 7-day Moving Average",
-    yaxis2 = ay, legend = list(x = 0.6, y = 0.9),margin = list(r = 50, t = 50)
-  ) 
+    yaxis2 = ay, legend = list(y = .97, x = .6, bgcolor = 'rgba(0,0,0,0)'),
+    margin = list(r = 50, t = 50)
+  ) %>%
+  rangeslider()
 ```
 
 ### Reflection
 
 ##### What ideas/suggestions from Claus Wilke’s helped shape your visualization?
 
-Storytelling/comparison drove what I was after. Here, I'm trying to show how COVID deaths follow COVID cases, and choices made in this visualization are made to show that comparison.
+Storytelling/comparison drove what I was after. Here, I'm trying to show how COVID deaths follow COVID cases, and choices made in this visualization are made to show that comparison. 
 
 ##### Is there anything more you wish you could do with this data?
 
-Nothing. I wish I could have made cases and deaths more distinguishable on the plot, but plotly created lots of frustrations in differentiating the two. 
+Nothing. I wish I could have made cases and deaths more distinguishable on the plot, but plotly created lots of frustrations in differentiating the two, while keeping the line and point color for each category the same. 
 
 ##### What were the most interesting or frustrating technical aspects of doing this?
 
 As mentioned before, making more clear the difference between deaths and cases would have been nice. 
+
