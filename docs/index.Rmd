@@ -10,9 +10,9 @@ knit: (
       output_file = 'index.html') })
 ---
 
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
 
 * [plotly projects](plotly-projects)

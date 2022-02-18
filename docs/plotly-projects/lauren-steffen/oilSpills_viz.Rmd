@@ -1,0 +1,123 @@
+---
+title: "Oil Spills Impacting US Waterways"
+author: "Lauren Steffen"
+date: "2/16/2022"
+output: 
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+```{r, setup, include=FALSE}
+library(mosaic)    # Load additional packages here 
+library(ggformula) # formula interface to ggplot2
+library(plotly)
+library(tidyverse)
+library(tidyxl)
+library(unpivotr)
+library(readxl)
+library(stringi)
+
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+
+theme_set(theme_bw()) # change theme for ggplot2
+trellis.par.set(theme=theme.mosaic()) # change default color scheme for lattice
+
+knitr::opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="small")   # slightly smaller font for code
+```
+
+
+  
+```{r}
+oilSpills <- xlsx_cells('oilSpillsUS.xlsx') %>%   #convert to cell format so that tidyxl and unpivotr work
+  filter(row != 1) %>%        #first row is title of the table
+  select(row, col, data_type, character, numeric)   #select the columns containing data and its location
+
+oilSpills <- oilSpills %>% 
+  behead("up-left", Year) %>%  #behead Year
+  filter(row < 14)  %>%   #last rows are metadata so filter them out
+  behead("up", Value) %>%  #behead Incidents and Gallons spilled
+  behead('left', Source) %>%  #behead Source
+  pivot_wider(names_from = Value, values_from = numeric) #pivot wider so there is a column for Incidents and Gallons spilled
+
+oilSpills <- oilSpills %>% 
+ select(Year, Source, Incidents, `Gallons spilled`) %>% 
+ group_by(Year, Source) %>% 
+ summarise_all(funs(trimws(paste(., collapse = '')))) %>% #merge rows together
+ ungroup()
+
+oilSpills$Incidents <- gsub('.{2}$', '', oilSpills$Incidents) %>%  #trim NAs
+  as.numeric()  #convert string to double 
+oilSpills$`Gallons spilled` <- gsub('^[A-Za-z]{2}', '', oilSpills$`Gallons spilled`) %>% #trim NAs
+  as.numeric() #convert string to double
+```
+
+unpivotr: https://nacnudus.github.io/spreadsheet-munging-strategies/pivot-simple.html#two-clear-rows-of-text-column-headers-left-aligned
+
+behead fn: https://www.rdocumentation.org/packages/unpivotr/versions/0.6.2/topics/behead
+
+tidyxl: https://cran.r-project.org/web/packages/tidyxl/vignettes/tidyxl.html`
+
+data from" https://www.bts.gov/content/petroleum-oil-spills-impacting-navigable-us-waters
+
+
+```{r}
+oilSpills %>%
+  head()
+```
+
+```{r fig.width=8, fig.width=7}
+y2 <- list(
+  #tickfont = list(color = "red"),
+  overlaying = "y",
+  side = "right",
+  title = "Number of Incidents",
+  automargin = T)
+
+oilSpills %>% filter(Source != "TOTAL all spills", 
+                     Source != "Vessel sources, total", 
+                     Source != "Nonvessel sources, total")  %>%
+  drop_na() %>%
+  mutate(Source = fct_reorder(Source, desc(`Gallons spilled`))) %>%
+  plot_ly(x = ~Year, y =~`Gallons spilled`, color = ~Source, type="bar", colors = "Accent",
+          width = 1000, height = 700) %>%
+  group_by(Year) %>%
+  summarise(n = sum(Incidents)) %>%
+  add_trace(x = ~Year, y = ~n, type = 'scatter',  mode = 'lines', 
+            name = "Incidents", yaxis = "y2", color = I("black")) %>%
+  layout(barmode = 'stack', yaxis2 = y2, legend = list(orientation = 'h'))
+
+```
+
+"On April 20, 2010, the oil drilling rig Deepwater Horizon, operating in the Macondo Prospect in the Gulf of Mexico, exploded and sank resulting in the death of 11 workers on the Deepwater Horizon and the largest spill of oil in the history of marine oil drilling operations." (https://www.epa.gov/enforcement/deepwater-horizon-bp-gulf-mexico-oil-spill#:~:text=On%20April%2020%2C%202010%2C%20the,of%20marine%20oil%20drilling%20operations.)
+
+
+
+Metadata:
+
+a Other vessels include commercial vessels, fishing boats, freight barges, freight ships, industrial vessels, oil recovery vessels, passenger vessels, unclassified public vessels, recreational boats, research vessels, school ships, tow and tug boats, mobile offshore drilling units, offshore supply vessels, publicly owned tank and freight ships, as well as vessels not fitting any particular class (unclassified).																				
+b Other nonvessel sources include deepwater ports, designated waterfront facilities, nonmarine land facilities, fixed offshore and inshore platforms, mobile facility, municipal facility, aircraft, land vehicles, railroad equipment, bridges, factories, fleeting areas, industrial facilities, intakes, locks, marinas, MARPOL reception facilities, nonvessel common carrier facilities, outfalls, sewers, drains, permanently moored facilities, shipyards, and ship repair facilities.																				
+c Mystery spills are spills from unknown or unidentified sources. U.S. Coast Guard investigators are unable to identify the vessel or facility that spilled the oil into U.S. navigable waters.																				
+																				
+NOTES																				
+Any offshore pipeline spills off shore now are addressed jointly by the Coast Guard (CG), National Oceanic and Atmospheric Administration (NOAA), Bureau of Safety and Environmental Enforcement (BSEE), and Bureau of Ocean Energy Management (BOEM). The latter two were the Minerals Management Service (MMS) prior to the DEEPWATER HORIZON casualty in 2010. The CG does generate offshore spill statistics which NOAA uses in their work.  																				
+Any spills inshore (pipeline or not) are typically handled by the EPA and the associated state government agency. Spills involving interstate pipelines would have oversight by the DOT Pipelines Administration. The former was established in a memorandum of understanding (MOU) back in the 70s.  																				
+In shore pipeline spills may also be addressed by the Chemical Safety Board, which is a relatively new federal agency involving production and manufacturing facilities.  																				
+CG has a MOU agreement with the EPA on who is the leading federal agency for response (Federal On-Scene Coordinator) and subsequent investigations. These statistics reflect the pollution incidents the CG has investigated as the lead agency. CG does not have any data on spills where the EPA or any of the state authorities are the lead agency.  																				
+The spike in Gallons spilled for 2005 can be attributed to the passage of Hurricane Katrina in Louisiana and Mississippi on Aug. 29, 2005, which caused numerous spills approximating 8 million gallons of oil in U.S. waters. The largest spill in U. S. waters began on April 20, 2010 with an explosion and fire on the mobile offshore drilling unit (MODU) DEEPWATER HORIZON. Subsequently, the MODU sank, leaving an open exploratory well to discharge crude oil into the Gulf of Mexico for several weeks. The most commonly accepted spill amount from the well is approximately 206.6 million gallons, plus approximately 400,000 gallons of oil products from the MODU. The totals in this table may be different from those that appear in the source, due to rounding by the source.																				
+After 2006, the CG do not distinguish between onshore pipelines and offshore pipelines on its analysis systems. This change was in response to issues on offshore spills and pipelines and the overlapping jurisdiction with MMS, as well as the lack of significant inshore spills and response to incidents on the mainland.																				
+"Details may not add up to totals due to rounding by the source.
+
+
+
+"																				
+
+
