@@ -1,0 +1,239 @@
+---
+title: "Global fruit consumption by fruit type and country(2013)"
+author: "Haoping He"
+date: "Spring 2022"
+output: html_document
+knit: (
+  function(inputFile, encoding) { 
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      output_file = 'index.html') })
+---
+
+```{r setup, include=FALSE, echo=FALSE, warning=FALSE}
+library(tidyverse)
+library(plotly)
+library(devtools)
+library(shiny)
+library(ggplot2)
+library(kableExtra)
+```
+\
+\
+\
+
+## Dataset
+This dataset is about global fruit consumption by country and fruit types.\
+* Fruit consumption by fruit type:[Click Here](https://ourworldindata.org/grapher/fruit-consumption-by-fruit-type?country=~OWID_WRL) \
+* Fruit consumption per capita: [Click Here](https://ourworldindata.org/grapher/fruit-consumption-per-capita) \
+
+
+
+
+```{r, echo=FALSE}
+
+#Average fruit consumption per person, measured in kilograms per year.
+fruit <- read.csv("/home/yh38/DATA303/Data303-Project/303Visualization/docs/plotly-projects/Haoping-He/fruit-consumption-per-capita.csv")
+
+#Average fruit consumption per person, differentiated by fruit types, measured in kilograms per year.
+fruittype <-  read.csv("/home/yh38/DATA303/Data303-Project/303Visualization/docs/plotly-projects/Haoping-He/fruit-consumption-by-fruit-type.csv")
+  
+  
+Fruit<- fruit%>%filter(Year == 2013) %>% select(-Year)
+Fruit_Type<- fruittype%>%filter(Year == 2013) %>% select(-Year, -Code) %>%
+  rename(Bananas = Food.Supply...Crops.Primary.Equivalent...Bananas...2615...Food.supply.quantity..kg.capita.yr....645...kg, 
+         Dates = Food.Supply...Crops.Primary.Equivalent...Dates...2619...Food.supply.quantity..kg.capita.yr....645...kg,
+         Citrus = Food.Supply...Crops.Primary.Equivalent...Citrus..Other...2614...Food.supply.quantity..kg.capita.yr....645...kg,
+         Oranges = Food.Supply...Crops.Primary.Equivalent...Oranges..Mandarines...2611...Food.supply.quantity..kg.capita.yr....645...kg,
+         Apples = Food.Supply...Crops.Primary.Equivalent...Apples.and.products...2617...Food.supply.quantity..kg.capita.yr....645...kg,
+         Lemons = Food.Supply...Crops.Primary.Equivalent...Lemons..Limes.and.products...2612...Food.supply.quantity..kg.capita.yr....645...kg,
+         Grapes = Food.Supply...Crops.Primary.Equivalent...Grapes.and.products..excl.wine....2620...Food.supply.quantity..kg.capita.yr....645...kg,
+         Grapefruit = Food.Supply...Crops.Primary.Equivalent...Grapefruit.and.products...2613...Food.supply.quantity..kg.capita.yr....645...kg,
+         Pineapples = Food.Supply...Crops.Primary.Equivalent...Pineapples.and.products...2618...Food.supply.quantity..kg.capita.yr....645...kg,
+         Plantains = Food.Supply...Crops.Primary.Equivalent...Plantains...2616...Food.supply.quantity..kg.capita.yr....645...kg,
+         Other = Food.Supply...Crops.Primary.Equivalent...Fruits..Other...2625...Food.supply.quantity..kg.capita.yr....645...kg)
+
+Data <- Fruit %>% left_join(Fruit_Type, by = 'Entity') %>%
+  rename(Country = Entity, 
+         Fruit = Fruits...Excluding.Wine...Food.supply.quantity..kg.capita.yr...FAO..2020.)
+  
+Data[is.na(Data)] = 0
+
+```
+
+\
+\
+\
+
+# Which types of fruit are more popular?
+Take a guess which ones are the most popular and most purchased fruit in the world within a list that contains banana, dates, citrus, organes, apples, lemons, grapes, grapefruit, pineapple, and plantains. \
+Back in 2013, the top three selling fruits include: oranges, bananas, and apples.\
+However, according to the research, in 2019, 3 most popular fruit are tomatoes, bananas, and watermelon. \
+
+```{r, echo=FALSE}
+
+sumdata=data.frame(value=apply(Data %>% select(-Country, -Code, -Fruit, -Other) ,2,sum))
+sumdata$key=rownames(sumdata)
+ggplot(data=sumdata, aes(x=reorder(key,-value), y=value)) +
+geom_bar(stat="identity", fill = 'light blue') + 
+  theme(axis.text.x = element_text(angle = 60, vjust = 0.5, hjust=1))+
+  labs(title = "What are the most popular fuuit?",
+      x = " ", y = "Kg/Year")
+```
+
+
+\
+\
+\
+
+
+# Which countries consume the most of top 5 popular fruit? \
+- Among all the countries, Luxembourg consumes most Oranges	in the world\
+- Rwanda consumes most Bananas		\
+- Austria	consumes most Apples		\
+- Ghana	consumes most Plantains		\
+- Albania	consumes most Grapes \
+
+```{r echo=FALSE}
+MOST <- Data %>% 
+  filter(Oranges == max(Data$Oranges))%>%
+  select(Country, Oranges)%>%
+  rename(Values = Oranges)%>%
+  add_column(Fruit = 'Oranges') %>%
+rbind(
+  Data %>% 
+  filter( Bananas == max(Data$Bananas))%>%
+  select(Country, Bananas)%>%
+      rename(Values = Bananas)%>%
+  add_column(Fruit = 'Bananas') 
+)%>%
+rbind(
+  Data %>% 
+  filter( Apples == max(Data$Apples))%>%
+  select(Country, Apples)%>%
+      rename(Values = Apples)%>%
+  add_column(Fruit = 'Apples') 
+)%>%
+rbind(
+  Data %>% 
+  filter( Plantains == max(Data$Plantains))%>%
+  select(Country, Plantains)%>%
+      rename(Values = Plantains)%>%
+  add_column(Fruit = 'Plantains') 
+)%>%
+rbind(
+  Data %>% 
+  filter( Grapes == max(Data$Grapes))%>%
+  select(Country, Grapes)%>%
+      rename(Values = Grapes)%>%
+  add_column(Fruit = 'Grapes') 
+)
+
+
+
+D <- Data%>%
+  select("Country", "Bananas" , "Oranges", "Apples" , "Grapes", "Plantains")%>%
+  pivot_longer(
+    cols = c("Bananas" , "Oranges", "Apples" , "Grapes", "Plantains"),
+    names_to = 'Fruit',
+    values_to = 'value'
+  )
+
+
+ggplot(D, aes(x=Fruit, y=value, color = Fruit)) + geom_point() +
+  geom_point(shape = 17, size = 2)
+
+
+library(plotly)
+
+fig <- plot_ly(
+  type = 'scatter',
+  x = D$Fruit,
+  y = D$value,
+  color = 'green',
+  text = paste(                "Make: ", D$value, 'kg/year',
+                               "<br>Country: ", D$Country),
+  hoverinfo = 'text',
+  mode = 'markers'
+    )
+
+kable(MOST)
+fig
+```
+
+
+\
+\
+\
+
+
+# Top 10 countries that consumed most fruits 
+```{r, echo=FALSE}
+
+Top_10 <- Data %>% 
+  arrange(desc(Fruit))%>%
+  head(15)
+
+fig <- plot_ly(Top_10, x = ~ reorder(Country, -Fruit), y = ~Fruit, name = 'Fruit total', type = 'scatter', mode = 'lines',
+  text = paste(
+               "<br>Country: ", Top_10$Country,"<br>",
+                 Top_10$Fruit, 'kg/year'),
+  hoverinfo = 'text') %>% 
+  layout(title= "Which Country Eats the Most Fruits?")
+
+fig
+```
+
+
+\
+\
+\
+
+# Fruit Consumption by fruit type/country(2013)
+
+```{r echo=FALSE}
+Data$hover <- with(Data, paste( '<b>' , Country , '</b>' , '<br>', 
+                                           "Bananas", '<b>' , Bananas,'</b>', "kg/year", "<br>", 
+                                           "Dates", '<b>' , Dates,'</b>', "kg/year", "<br>",
+                                            "Citrus", '<b>' , Citrus,'</b>', "kg/year", "<br>",
+                                            "Oranges", '<b>' , Oranges,'</b>', "kg/year", "<br>",
+                                           "Apples", '<b>' , Apples,'</b>', "kg/year", "<br>",
+                                        "Lemons", '<b>' , Lemons,'</b>', "kg/year", "<br>",
+                                        "Grapes", '<b>' , Grapes,'</b>', "kg/year", "<br>",
+                                        "Grapefruit", '<b>' , Grapefruit,'</b>', "kg/year", "<br>",
+                                "Pineapples", '<b>' , Pineapples,'</b>', "kg/year", "<br>",
+                                "Plantains", '<b>' , Plantains,'</b>', "kg/year", "<br>",
+                                "Other", '<b>' , Other,'</b>', "kg/year", "<br>"))
+         
+       
+
+fig3 <-  plot_ly(Data, type='choropleth', 
+                      locations=Data$Code, 
+                      z=Data$Fruit,  
+                      text=Data$hover, 
+                      colorscale="Viridis") %>% 
+  layout(title = 'Fruit Consumption by fruit type/country(2013)')
+
+fig3
+```
+
+\
+\
+\
+
+
+# Reflection
+
+	○ What ideas/suggestions from Claus Wilke’s helped shape your visualization?\
+	In chapter 4, Claus Wike talked about using color scales in visualization. He suggested us to use color to do three things: \
+		1. To distinguish \
+		2. To represent \
+		3. To highlight \
+	However, in chapter 19, He also mentioned about implement color can be misleading sometimes. So I'm trying to implement his ideas in my chart trying to convey a clear idea using color scale. \
+	
+	○ Is there anything more you wish you could do with this data?\
+	Something else I want to do with this dataset is to investigate the correlation between geographic locations and fruit consumptions. For example, if countries from which certain area are more likely to consume bananas, etc. So it would be interesting to make a map by fruit type.  \
+	
+	○ What were the most interesting or frustrating technical aspects of doing this?\
+	I tried to highlight the contour of the map when hover onto certain country, but I wasn't able to figure it out. Also, I wanted to link two graphs together but I didn't find any useful information to do that, either. \
