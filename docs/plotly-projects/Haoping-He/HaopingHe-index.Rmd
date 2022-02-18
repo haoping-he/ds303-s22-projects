@@ -78,7 +78,7 @@ sumdata$key=rownames(sumdata)
 ggplot(data=sumdata, aes(x=reorder(key,-value), y=value)) +
 geom_bar(stat="identity", fill = 'light blue') + 
   theme(axis.text.x = element_text(angle = 60, vjust = 0.5, hjust=1))+
-  labs(title = "What are the most popular fuuit?",
+  labs(title = "What are the most popular fruit?",
       x = " ", y = "Kg/Year")
 ```
 
@@ -95,7 +95,7 @@ geom_bar(stat="identity", fill = 'light blue') +
 - Ghana	consumes most Plantains		\
 - Albania	consumes most Grapes \
 
-```{r echo=FALSE}
+```{r echo=FALSE, warning=FALSE}
 MOST <- Data %>% 
   filter(Oranges == max(Data$Oranges))%>%
   select(Country, Oranges)%>%
@@ -130,6 +130,14 @@ rbind(
   add_column(Fruit = 'Grapes') 
 )
 
+kable(MOST)
+```
+
+\
+\
+
+
+```{r echo=FALSE, warning=FALSE}
 
 
 D <- Data%>%
@@ -158,18 +166,14 @@ fig <- plot_ly(
   mode = 'markers'
     )
 
-kable(MOST)
 fig
 ```
-
-
-\
 \
 \
 
 
 # Top 10 countries that consumed most fruits 
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE}
 
 Top_10 <- Data %>% 
   arrange(desc(Fruit))%>%
