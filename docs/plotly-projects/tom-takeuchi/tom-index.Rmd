@@ -7,14 +7,15 @@ knit: (
   function(inputFile, encoding) { 
     rmarkdown::render( 
       input       = inputFile, 
-      encoding    = encoding, 
+      encoding    = encoding,
       output_file = 'index.html') })
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, echo = FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(plotly)
+library(crosstalk)
 ```
 
 ## Background
@@ -28,7 +29,7 @@ Since the video did not share the dataset, I downloaded another dataset from [Ou
 Although the year starts from 1870, I decided to use data only after 1950 because most countries miss values for population and GDP for years before 1950.
 
 
-```{r}
+```{r, echo = FALSE}
 le <- read.csv("data/life_expectancy_data.csv") %>% 
   janitor::clean_names() %>% 
   na.omit() %>% 
@@ -36,19 +37,15 @@ le <- read.csv("data/life_expectancy_data.csv") %>%
          year >= 1950) 
 ```
 
-```{r}
-le %>% head()
-```
-
 There are 166 countries in the dataset, but it misses information about which continent a country belongs to.
 
-I used [this website](https://statisticstimes.com/geography/countries-by-continents.php) as a reference to continent, and manually labeled each country.
+I used [this website](https://statisticstimes.com/geography/countries-by-continents.php) as a reference to continent, and manually labeled each country by using `case_when` function, but I should have just used `left_join` for the sake of efficiency...
 
-```{r}
+```{r, include = FALSE}
 le %>% distinct(entity) %>% nrow()
 ```
 
-```{r}
+```{r, echo = FALSE}
 le <- le %>% 
   mutate(continent = case_when
          (entity %in% c("Algeria", "Angola", "Benin", "Botswana",
@@ -110,14 +107,11 @@ le <- le %>%
   ))
 ```
 
-I should have used `left_join` for the sake of efficiency...
-
 ## Data Visualization
 
-I used plotly and crosstalk to make a visualization.
+I used plotly and crosstalk to make a visualization.  I think crosstalk does not go well with animation plots as the continents/countries shown are different from ones selected.
 
-```{r}
-library(crosstalk)
+```{r message=FALSE, warning=FALSE, echo = FALSE}
 shared_le <- SharedData$new(le)
 
 bscols(widths = c(2,NA),
@@ -128,13 +122,13 @@ bscols(widths = c(2,NA),
   ggplot(aes(gdp_per_capita, life_expectancy)) +
   geom_point(aes(size = population_historical_estimates, frame = year, ids = entity, color = continent)) +
   scale_x_log10() +
-  labs(x = "GDP per Capita", y = "Life Expectancy", size = "Continent"))
+  labs(x = "GDP per Capita", y = "Life Expectancy", size = ""))
 )
 ```
 
 ## Show countries in North America
 
-```{r}
+```{r message=FALSE, warning=FALSE, echo = FALSE}
 le_na <- le %>% filter(continent == "North America")
 shared_le_na <- SharedData$new(le_na)
 
@@ -142,18 +136,37 @@ bscols(widths = c(2,NA),
   list(
     filter_select("entity", "Country", shared_le_na, ~entity)
   ),
-  ggplotly(shared_le_na %>% 
-  ggplot(aes(gdp_per_capita, life_expectancy)) +
+  ggplotly(
+  ggplot(data = shared_le_na, aes(gdp_per_capita, life_expectancy)) +
   geom_point(aes(size = population_historical_estimates, frame = year, color = entity)) +
   scale_x_log10() +
-  labs(x = "GDP per Capita", y = "Life Expectancy", size = "Country"))
+  labs(x = "GDP per Capita", y = "Life Expectancy", color = "Country", size = ""))
 )
 ```
+
+## Better One
+
+```{r message=FALSE, warning=FALSE, echo = FALSE}
+bscols(widths = c(2,4,6),
+  list(
+    filter_select("entity", "Country", shared_le, ~entity),
+    filter_select("year", "Years", shared_le, ~year)
+  ),
+  add_lines(shared_le %>%
+  plot_ly(x = ~year, y = ~life_expectancy, color = ~entity, id = ~entity), showlegend = FALSE) %>% 
+    layout(xaxis = list(title = "Year"), yaxis = list(title = "Life Expectancy")),
+  
+  add_lines(shared_le %>%
+  plot_ly(x = ~year, y = ~gdp_per_capita, color = ~entity, id = ~entity) %>% 
+    layout(xaxis = list(title = "Year"), yaxis = list(title = "GDP Per Capita")))
+)
+```
+
 
 ## Reflection
 
 * I wanted to make it as simple as possible. Without the selector for continents/countries, all dots were crammed together and it was difficult to see specific continents/countries. After implementing the selector, I think the visualization became much simpler.
 
-* Usually, selected countries do not match with what are shown in the graph, which I want to fix in the future.
+* For the animation visualizations, selected countries do not match with what are shown in the graph, which I want to fix in the future. For the bar graph, the adjacent countries in the list have similar color, so it is hard to distinguish.
 
-* The most frustrating part was definitely the mismatching.
+* The most frustrating part was definitely the mismatching between selected and shown.
