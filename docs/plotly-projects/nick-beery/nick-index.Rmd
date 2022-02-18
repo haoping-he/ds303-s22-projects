@@ -7,7 +7,7 @@ output:
 params: 
   show_code: 
     label: "Show code"
-    value: false
+    value: true
 knit: (function(inputFile, encoding) {
     show_code <- rmarkdown::yaml_front_matter(inputFile)$params$show_code$value;
     outfile <- if (show_code) "show-code-index.html" else "index.html";
