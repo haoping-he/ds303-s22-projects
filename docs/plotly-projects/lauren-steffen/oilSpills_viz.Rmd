@@ -1,17 +1,22 @@
 ---
 title: "Oil Spills Impacting US Waterways"
 author: "Lauren Steffen"
-date: "2/16/2022"
+date: "Spring 2022"
 output: 
-  html_document:
-    fig_height: 3
-    fig_width: 5
-  pdf_document:
-    fig_height: 3
-    fig_width: 5
-  word_document:
-    fig_height: 3
-    fig_width: 5
+  html_document: default
+params: 
+  show_code: 
+    label: "Show code"
+    value: false
+knit: (function(inputFile, encoding) {
+    show_code <- rmarkdown::yaml_front_matter(inputFile)$params$show_code$value;
+    outfile <- if (show_code) "show-code-index.html" else "index.html";
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      output_file = outfile
+    )
+  })
 ---
 
 ```{r, setup, include=FALSE}
@@ -26,12 +31,9 @@ library(stringi)
 
 # Some customization.  You can alter or delete as desired (if you know what you are doing).
 
-theme_set(theme_bw()) # change theme for ggplot2
-trellis.par.set(theme=theme.mosaic()) # change default color scheme for lattice
-
 knitr::opts_chunk$set(
-  tidy=FALSE,     # display code as typed
-  size="small")   # slightly smaller font for code
+  echo = params$show_code
+  )  
 ```
 
 
@@ -51,13 +53,15 @@ oilSpills <- oilSpills %>%
 oilSpills <- oilSpills %>% 
  select(Year, Source, Incidents, `Gallons spilled`) %>% 
  group_by(Year, Source) %>% 
- summarise_all(funs(trimws(paste(., collapse = '')))) %>% #merge rows together
+ summarise_all(list(~trimws(paste(., collapse = '')))) %>% #merge rows together
  ungroup()
 
 oilSpills$Incidents <- gsub('.{2}$', '', oilSpills$Incidents) %>%  #trim NAs
-  as.numeric()  #convert string to double 
+  as.numeric() %>% #convert string to double 
+  suppressWarnings()  #suppress warnings, there should be some NAs
 oilSpills$`Gallons spilled` <- gsub('^[A-Za-z]{2}', '', oilSpills$`Gallons spilled`) %>% #trim NAs
-  as.numeric() #convert string to double
+  as.numeric() %>% #convert string to double
+   suppressWarnings()   #suppress warnings, there should be some NAs
 ```
 
 unpivotr: https://nacnudus.github.io/spreadsheet-munging-strategies/pivot-simple.html#two-clear-rows-of-text-column-headers-left-aligned
