@@ -20,15 +20,18 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r echo = FALSE, results = "asis"}
 projects <- dir(pattern = "index.Rmd", recursive = TRUE)
+project_list <- character(0)
 for (p in projects) {
   yaml <- rmarkdown::yaml_front_matter(p)
-  glue::glue("\n\n* [{title}]({path}) by {name}", 
-             path = dirname(p), 
-             title = yaml[["title"]],
-             name = yaml[["author"]]
-  ) |> cat()
+  project_list <-
+    c(project_list, 
+      glue::glue("\n\n#. [{title}]({path}) by {name}", 
+                 path = dirname(p), 
+                 title = yaml[["title"]],
+                 name = yaml[["author"]]
+      ) )
 }
-
+project_list |> sort() |> cat()
 ```
 
 ## Instructions
