@@ -73,11 +73,6 @@ tidyxl: https://cran.r-project.org/web/packages/tidyxl/vignettes/tidyxl.html`
 data from" https://www.bts.gov/content/petroleum-oil-spills-impacting-navigable-us-waters
 
 
-```{r}
-oilSpills %>%
-  head()
-```
-
 ```{r fig.width=8, fig.width=7}
 y2 <- list(
   #tickfont = list(color = "red"),
@@ -95,7 +90,7 @@ oilSpills %>% filter(Source != "TOTAL all spills",
           width = 1000, height = 700) %>%
   group_by(Year) %>%
   summarise(n = sum(Incidents)) %>%
-  add_trace(x = ~Year, y = ~n, type = 'scatter',  mode = 'lines', 
+  add_trace(x = ~Year, y = ~n, type = 'scatter',  mode = 'markers', 
             name = "Incidents", yaxis = "y2", color = I("black")) %>%
   layout(barmode = 'stack', yaxis2 = y2, legend = list(orientation = 'h'))
 
@@ -119,9 +114,3 @@ CG has a MOU agreement with the EPA on who is the leading federal agency for res
 The spike in Gallons spilled for 2005 can be attributed to the passage of Hurricane Katrina in Louisiana and Mississippi on Aug. 29, 2005, which caused numerous spills approximating 8 million gallons of oil in U.S. waters. The largest spill in U. S. waters began on April 20, 2010 with an explosion and fire on the mobile offshore drilling unit (MODU) DEEPWATER HORIZON. Subsequently, the MODU sank, leaving an open exploratory well to discharge crude oil into the Gulf of Mexico for several weeks. The most commonly accepted spill amount from the well is approximately 206.6 million gallons, plus approximately 400,000 gallons of oil products from the MODU. The totals in this table may be different from those that appear in the source, due to rounding by the source.																				
 After 2006, the CG do not distinguish between onshore pipelines and offshore pipelines on its analysis systems. This change was in response to issues on offshore spills and pipelines and the overlapping jurisdiction with MMS, as well as the lack of significant inshore spills and response to incidents on the mainland.																				
 "Details may not add up to totals due to rounding by the source.
-
-
-
-"																				
-
-
