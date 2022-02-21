@@ -7,7 +7,7 @@ output:
 params: 
   show_code: 
     label: "Show code"
-    value: false
+    value: true
 knit: (function(inputFile, encoding) {
     show_code <- rmarkdown::yaml_front_matter(inputFile)$params$show_code$value;
     outfile <- if (show_code) "show-code-index.html" else "index.html";
@@ -47,7 +47,7 @@ data <- read.csv("USA_GDP_Annual.csv")
 ```{block include = params$show_code, echo = TRUE}
 ## Data Wrangling
 ```
-```{r}
+```{r wrangle1}
 # remove commas & convert columns of interest to numeric
 data$GDP <- as.numeric(gsub("," ,"" , data$GDP))
 data$Consumption <- as.numeric(gsub("," ,"" , data$Consumption))
@@ -55,7 +55,7 @@ data$Investment <- as.numeric(gsub("," ,"" , data$Investment))
 data$Net.Exports <- as.numeric(gsub("," ,"" , data$Net.Exports))
 data$Government.Spending <- as.numeric(gsub("," ,"" , data$Government.Spending))
 ```
-```{r}
+```{r wrangle2}
 # add proportion of each component to data frame
 data <- data %>% mutate(
   Consumption.prop = Consumption / GDP,
@@ -73,7 +73,9 @@ On the second plot, each of the four components are shown for each year as a pro
 Notice that net exports is sometimes negative. This means that, in that year, the value of the imports into the USA was greater than the value of the exports out of the USA, otherwise known as a *trade deficit*.
 
 ## My Visualizations
-```{r}
+```{r plot1}
+# first plot
+# Nominal GDP by Year
 my_viz1 <- data %>%
   plot_ly() %>%
   # add GDP line
@@ -90,7 +92,10 @@ my_viz1 <- data %>%
 # display plot
 my_viz1
 ```
-```{r}
+
+```{r plot2}
+# second plot
+# Components of Nominal GDP by Year
 my_viz2 <- data %>%
   plot_ly() %>%
   # add Consumption bars/lines
@@ -134,6 +139,12 @@ my_viz2 <- data %>%
 
 # display plot
 my_viz2
+```
+
+```{r plot3}
+# third plot
+# Animated Components of Nominal GDP by Year
+
 ```
 
 ## Data Source
