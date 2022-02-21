@@ -64,17 +64,9 @@ oilSpills$`Gallons spilled` <- gsub('^[A-Za-z]{2}', '', oilSpills$`Gallons spill
    suppressWarnings()   #suppress warnings, there should be some NAs
 ```
 
-unpivotr: https://nacnudus.github.io/spreadsheet-munging-strategies/pivot-simple.html#two-clear-rows-of-text-column-headers-left-aligned
-
-behead fn: https://www.rdocumentation.org/packages/unpivotr/versions/0.6.2/topics/behead
-
-tidyxl: https://cran.r-project.org/web/packages/tidyxl/vignettes/tidyxl.html`
-
-data from" https://www.bts.gov/content/petroleum-oil-spills-impacting-navigable-us-waters
-
 
 ## Data
-The data came from the [Bureau of Transportation Statistics](https://www.bts.gov/content/petroleum-oil-spills-impacting-navigable-us-waters). Only the pollution incidents where the Coast Guard investigated as the lead agency are included in this dataset. Data on spills where the Environmental Protection Agency or any of the state authorities are the lead agency is not included. These are mostly offshore spills as the EPA usually handles inshore spills. These statistics cover yearly gallons spilled, number of incidents, and source type from 1985 - 2020. 
+The data came from the [Bureau of Transportation Statistics](https://www.bts.gov/content/petroleum-oil-spills-impacting-navigable-us-waters). Only the pollution incidents where the Coast Guard investigated as the lead agency are included in this dataset. Data on spills where the Environmental Protection Agency or any of the state authorities are the lead agency is not included. These are mostly offshore spills as the EPA usually handles inshore spills. These statistics cover yearly gallons spilled, number of incidents, and source type from 1985, 1990, 1995-2020. 
 
 ## Vessel, Non-Vessel, and Mystery Sources
 
@@ -84,7 +76,8 @@ The data came from the [Bureau of Transportation Statistics](https://www.bts.gov
 oilSpills %>% filter(Source == "Vessel sources, total" | 
                      Source == "Nonvessel sources, total"|
                      Source == "Mysteryc") %>%
-  plot_ly(x = ~Year, y =~`Gallons spilled`, color = ~Source, type="bar",
+  plot_ly(x = ~Year, y =~`Gallons spilled`, color = ~Source, type="bar", colors = 
+            c("#a6cee3", "#1f78b4", "#b2df8a"),
            width = 1000) %>%
   layout(barmode = 'dodge', yaxis = list(fixedrange = FALSE)) 
 ```
@@ -96,12 +89,13 @@ oilSpills %>% filter(Source == "Vessel sources, total"|
                      Source == "Nonvessel sources, total"|
                      Source == "Mysteryc")  %>%
   drop_na() %>%
-  plot_ly() %>%
-  add_trace(x = ~Year, y = ~Incidents, type = 'scatter', color =~Source, mode = 'lines+markers')
+  plot_ly(width = 1000) %>%
+  add_trace(x = ~Year, y = ~Incidents, type = 'scatter', color =~Source, mode = 'lines+markers', 
+            colors = c("#a6cee3", "#1f78b4", "#b2df8a"))
   
 ```
 
-## Source, Incidents, and Gallons Spilled
+### Source, Incidents, and Gallons Spilled
 
 ```{r fig.width=8, fig.width=7}
 y2 <- list(
@@ -116,7 +110,7 @@ oilSpills %>% filter(Source != "TOTAL all spills",
   drop_na() %>%
   mutate(Source = fct_reorder(Source, desc(`Gallons spilled`))) %>%
   plot_ly(x = ~Year, y =~`Gallons spilled`, color = ~Source, type="bar", colors = "Accent",
-          width = 1000, height = 700) %>%
+          width = 1000, height = 500) %>%
   group_by(Year) %>%
   summarise(n = sum(Incidents)) %>%
   add_trace(x = ~Year, y = ~n, type = 'scatter',  mode = 'markers', 
@@ -127,4 +121,22 @@ oilSpills %>% filter(Source != "TOTAL all spills",
 ```
 
 "On April 20, 2010, the oil drilling rig Deepwater Horizon, operating in the Macondo Prospect in the Gulf of Mexico, exploded and sank resulting in the death of 11 workers on the Deepwater Horizon and the largest spill of oil in the history of marine oil drilling operations." (https://www.epa.gov/enforcement/deepwater-horizon-bp-gulf-mexico-oil-spill#:~:text=On%20April%2020%2C%202010%2C%20the,of%20marine%20oil%20drilling%20operations.)
+
+## References 
+
+* [unpivotr](https://nacnudus.github.io/spreadsheet-munging-strategies/pivot-simple.html#two-clear-rows-of-text-column-headers-left-aligned)
+
+* [behead function](https://www.rdocumentation.org/packages/unpivotr/versions/0.6.2/topics/behead)
+
+* [tidyxl](https://cran.r-project.org/web/packages/tidyxl/vignettes/tidyxl.html`)
+
+* [range slider](https://stackoverflow.com/questions/62875576/zoom-on-y-axis-while-using-plotlyrangeslider)
+
+## Reflections
+
+* Wilke: stacked vs grouped bar charts and the implications of connecting dots with lines
+
+* wrangling - [double header excel data](https://www.bts.gov/content/petroleum-oil-spills-impacting-navigable-us-waters)[(code)](index-with_code.html)
+
+* Improvements: double y-axis? tree-map or ribbon plot, more user interactivity - button that switches from stacked bar plot to grouped bar plot
 
