@@ -5,11 +5,25 @@ output:
   html_document: 
     fig_height: 4
     fig_width: 9
+params: 
+  show_code: 
+    label: "Show code"
+    value: false
+knit: (function(inputFile, encoding) {
+    show_code <- rmarkdown::yaml_front_matter(inputFile)$params$show_code$value;
+    outfile <- if (show_code) "show-code-index.html" else "index.html";
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      output_file = outfile
+      )
+    }
+  )
 ---
 
 ```{r setup, include=FALSE}
 # R Setup
-knitr::opts_chunk$set(echo = TRUE, fig.path = "MiCorona_files/figure-gfm/")
+knitr::opts_chunk$set(echo = params$show_code)
 library(zoo)
 library(dplyr)
 library(rlang)
@@ -33,9 +47,8 @@ I've been following COVID cases, deaths, and hospitalizations in Michigan & the 
 
 The link for the data is scraped using Python, downloaded using R, cleaned/massaged in Python, and visualized in R's Plotly interface
 
-### Get link for data:
-
 ```{python get-excel-link, results='hide'}
+# Get link for data
 from urllib.request import urlopen
 
 from bs4 import BeautifulSoup
@@ -52,9 +65,8 @@ finallink = "https://michigan.gov" + \
     [i for i in links if "by_Date" in i][0]
 ```
 
-### Download data:
-
 ```{r get-excel}
+# Downlaod data
 temp <- tempfile()
 download.file(py$finallink, destfile = temp)
 mi_data <- readxl::read_excel(temp)
@@ -62,16 +74,15 @@ mi_data <- readxl::read_excel(temp)
 
 This data set contains cumulative cases, new cases, cumulative deaths, and new deaths for each county for each date in roughly the last two years. For my visualization, I simply want total cases and deaths in the state, so the data is grouped by date and deaths and cases are summed. 
 
-### Clean data:
 
 ```{python aggregate-data}
+# Clean data
 mi_data = r.mi_data
 agg_data = mi_data.groupby(["Date"], as_index=False).sum()
 ```
 
 ```{r data-load}
 mi_cases_by_day = py$agg_data
-head(mi_cases_by_day)
 ```
 
 ### Initial Data Visualization:
@@ -118,6 +129,10 @@ plot_ly(mi_cases_by_day,x = ~Date) %>%
     margin = list(r = 50, t = 50)
   ) %>%
   rangeslider()
+```
+
+```{block include = ! params$show_code, echo = TRUE}
+A version of this page showing code is available [here](show-code-index.html).
 ```
 
 ### Reflection
