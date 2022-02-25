@@ -135,7 +135,7 @@ annotations = list(
     showarrow = FALSE 
   ),  
   list( 
-    x = 0.82,  
+    x = 0.86,  
     y = 1.02,  
     text = "Global CO2 Emission (in kg/person/year)",  
     xref = "paper",  
@@ -179,7 +179,21 @@ subplot(fig1, fig2, fig3, fig4, nrows = 2,
         margin = 0.09) %>%
   layout(title = "The Disproportionate Carbon Footprint of Animal Products",
          annotations = annotations,
-         margin = list(t = 80))
+         margin = list(t = 80),
+         updatemenus = list(
+           list(
+             type = "buttons",
+             y = .22,
+             buttons = list(
+               list(method = "restyle",
+                    args = list("visible", list(TRUE, TRUE, TRUE, TRUE)),
+                    label = "All"),
+               list(method = "restyle",
+                    args = list("visible", list(TRUE, TRUE, FALSE, FALSE)),
+                    label = "Global Consumption"),
+               list(method = "restyle",
+                    args = list("visible", list(FALSE, FALSE, TRUE, TRUE)),
+                    label = "Global Emission")))))
 ```
 
 ### Data Source:
