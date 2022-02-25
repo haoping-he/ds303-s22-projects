@@ -58,8 +58,8 @@ food_consumption_grouped <- food_consumption_total %>%
   group_by(food_type) %>%
   summarize(total_consumption = sum(total_consumption),
             total_emission = sum(total_emission)) %>%
-  mutate(perc_consumption = total_consumption / sum(total_consumption),
-         perc_emission = total_emission / sum(total_emission),
+  mutate(perc_consumption = (total_consumption / sum(total_consumption)) * 100,
+         perc_emission = (total_emission / sum(total_emission)) * 100,
          "% of Total" = "")
 
 food_consumption_grouped
@@ -71,7 +71,10 @@ food_consumption_grouped
 fig1 <- plot_ly(food_consumption_total,
         y = ~ food_category,
         x = ~ total_consumption,
-        color = ~food_type) %>%
+        color = ~food_type,
+        label = ~food_type,
+        hovertemplate = paste('<b>Food Category</b>: %{y}<br>',
+                        '<b>Consumption</b>: %{x:.2f}<br>')) %>%
   add_bars() %>%
   layout(yaxis = list(categoryorder = "array",
                       categoryarray = food_consumption_total$food_category,
@@ -82,7 +85,10 @@ fig2 <- plot_ly(food_consumption_total,
         y = ~ food_category,
         x = ~ total_emission,
         color = ~food_type,
-        showlegend = FALSE) %>%
+        label = ~food_type,
+        showlegend = FALSE,
+        hovertemplate = paste('<b>Food Category</b>: %{y}<br>',
+                        '<b>Consumption</b>: %{x:.2f}<br>')) %>%
   add_bars() %>%
   layout(title = "Emission",
          yaxis = list(categoryorder = "array",
@@ -93,20 +99,24 @@ fig3 <- plot_ly(food_consumption_grouped,
         x = ~ perc_consumption,
         y = ~ `% of Total`,
         color = ~ food_type,
+        hovertemplate = paste('<b>% of Total Consumption</b>: %{x:.2f}%<br>'),
         showlegend = FALSE) %>%
   add_bars() %>%
   layout(barmode = "stack",
-         yaxis = list(showticklabels = FALSE),
+         yaxis = list(visible =  FALSE,
+                      showticklabels =  FALSE),
          xaxis = list(hoverformat = ".2f"))
 
 fig4 <- plot_ly(food_consumption_grouped,
         x = ~ perc_emission,
         y = ~ `% of Total`,
         color = ~ food_type,
+        hovertemplate = paste('<b>% of Total Emission</b>: %{x:.2f}%<br>'),
         showlegend = FALSE) %>%
   add_bars() %>%
   layout(barmode = "stack",
-         yaxis = list(showticklabels = FALSE),
+         yaxis = list(visible =  FALSE,
+                      showticklabels =  FALSE),
          xaxis = list(hoverformat = ".2f"))
 ```
 
@@ -125,7 +135,7 @@ annotations = list(
     showarrow = FALSE 
   ),  
   list( 
-    x = 0.82,  
+    x = 0.86,  
     y = 1.02,  
     text = "Global CO2 Emission (in kg/person/year)",  
     xref = "paper",  
@@ -169,7 +179,21 @@ subplot(fig1, fig2, fig3, fig4, nrows = 2,
         margin = 0.09) %>%
   layout(title = "The Disproportionate Carbon Footprint of Animal Products",
          annotations = annotations,
-         margin = list(t = 80))
+         margin = list(t = 80),
+         updatemenus = list(
+           list(
+             type = "buttons",
+             y = .22,
+             buttons = list(
+               list(method = "restyle",
+                    args = list("visible", list(TRUE, TRUE, TRUE, TRUE)),
+                    label = "All"),
+               list(method = "restyle",
+                    args = list("visible", list(TRUE, TRUE, FALSE, FALSE)),
+                    label = "Global Consumption"),
+               list(method = "restyle",
+                    args = list("visible", list(FALSE, FALSE, TRUE, TRUE)),
+                    label = "Global Emission")))))
 ```
 
 ### Data Source:
