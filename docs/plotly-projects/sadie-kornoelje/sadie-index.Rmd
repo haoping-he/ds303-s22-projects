@@ -115,7 +115,7 @@ medal_counts2 |>
 
 ### New Plot - Medals by Country per Event
 
-```{r}
+```{r message = FALSE, warning = FALSE}
 medals_per_event <- olympics0 |>
   group_by(Country, Medal, Sport) |>
   summarise(totals = n()) |>
@@ -139,8 +139,8 @@ bscols(widths = c(2,NA),
   geom_point(aes(color = Medal, label = Sport))  +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
   scale_color_manual(values=c("#FFD700", "#C0C0C0", "#CD7F32")) + 
-  labs(x = "Country <br> (alphabetical)", y = "Medals Won", size = ""))
-) 
+  labs(x = "Country <br> (alphabetical)", y = "Medals Won", size = "", 
+       title = "Medals per Country <br> Split by Event"))) 
   
 ```
 
