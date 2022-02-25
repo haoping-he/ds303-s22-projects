@@ -26,13 +26,18 @@ knitr::opts_chunk$set(echo = params$show_code,
 
 ```{block include = ! params$show_code, echo = TRUE}
 ### Want to see the code?
-A version of this page showing code is available [here](show-code-index.html).
+A version of this page showing the code is available [here](show-code-index.html).
+```
+
+```{block include = params$show_code, echo = TRUE}
+### Want to hide the code?
+A version of this page hiding the code is available [here](index.html).
 ```
 
 ```{block include = params$show_code, echo = TRUE}
 ## Setup
 ```
-```{r libraries, message=FALSE}
+```{r libraries, message=FALSE, warning=FALSE}
 library(plotly)
 ```
 
@@ -72,7 +77,7 @@ On the second plot, each of the four components are shown for each year as a pro
 
 Notice that net exports is sometimes negative. This means that, in that year, the value of the imports into the USA was greater than the value of the exports out of the USA, otherwise known as a *trade deficit*.
 
-## My Visualizations
+## Visualizations
 ```{r plot1}
 # first plot
 # Nominal GDP by Year
@@ -143,8 +148,40 @@ my_viz2
 
 ```{r plot3}
 # third plot
-# Animated Components of Nominal GDP by Year
+# Components of Nominal GDP by Year
+my_viz3 <- data %>%
+  plot_ly(type = "bar", y = ~Consumption.prop, name = "Consumption", frame = ~Year, 
+            # customize tooltip
+            text = ~Year, textposition = "none",
+            hovertemplate = paste0('<b>Year</b>: %{text}<br><b>Proportion</b>: %{y:.4f}<br><b>Value</b>:',
+                                   ' $%{text}<br><i>(value in millions of USD)</i>')) %>%
+  # add Investment bars/lines
+  add_trace(type = "bar", y = ~Investment.prop, name = "Investment", 
+            # customize tooltip
+            text = ~Year, textposition = "none",
+            hovertemplate = paste0('<b>Year</b>: %{text}<br><b>Proportion</b>: %{y:.4f}<br><b>Value</b>:',
+                                   ' $%{text}<br><i>(value in millions of USD)</i>')) %>%
+  # add Net Exports bars/lines
+  add_trace(type = "bar", y = ~Net.Exports.prop, name = "Net Exports", 
+            # customize tooltip
+            text = ~Year, textposition = "none",
+            hovertemplate = paste0('<b>Year</b>: %{text}<br><b>Proportion</b>: %{y:.4f}<br><b>Value</b>:',
+                                   ' $%{text}<br><i>(value in millions of USD)</i>')) %>%
+  # add Gov Spending bars/lines
+  add_trace(type = "bar", y = ~Government.Spending.prop, name = "Government Spending",
+            # customize tooltip
+            text = ~Year, textposition = "none",
+            hovertemplate = paste0('<b>Year</b>: %{text}<br><b>Proportion</b>: %{y:.4f}<br><b>Value</b>:',
+                                   ' $%{text}<br><i>(value in millions of USD)</i>')) %>%
+  # title, y-axis label
+  layout(title = list(text = "Components of Nominal GDP by Year (Animated)", font = list(size = 22), y = 0.99), 
+         xaxis = list(title = "Component of GDP"),
+         yaxis = list(title = "Proportion of GDP"),
+         # customize colors of the four traces
+         colorway = c("#5a46d2", "#b36b00", "#ff005a", "#32aa00"))
 
+# display plot
+my_viz3
 ```
 
 ## Data Source
