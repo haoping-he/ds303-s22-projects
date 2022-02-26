@@ -2,7 +2,7 @@
 title: "Global Diet Carbon Footprint"
 author: "Adam Ritsema"
 date: "Spring 2022"
-output: html_document
+output: flexdashboard::flex_dashboard
 knit: (
   function(inputFile, encoding) { 
     rmarkdown::render( 
@@ -85,7 +85,6 @@ fig2 <- plot_ly(food_consumption_total,
         y = ~ food_category,
         x = ~ total_emission,
         color = ~food_type,
-        label = ~food_type,
         showlegend = FALSE,
         hovertemplate = paste('<b>Food Category</b>: %{y}<br>',
                         '<b>Consumption</b>: %{x:.2f}<br>')) %>%
@@ -93,6 +92,19 @@ fig2 <- plot_ly(food_consumption_total,
   layout(title = "Emission",
          yaxis = list(categoryorder = "array",
                       categoryarray = food_consumption_total$food_category),
+         xaxis = list(title = "Consumption (in kg/person/year)"))
+
+fig2solo <- plot_ly(food_consumption_total,
+        y = ~ food_category,
+        x = ~ total_emission,
+        color = ~food_type,
+        hovertemplate = paste('<b>Food Category</b>: %{y}<br>',
+                        '<b>Consumption</b>: %{x:.2f}<br>')) %>%
+  add_bars() %>%
+  layout(title = "Emission",
+         yaxis = list(categoryorder = "array",
+                      categoryarray = food_consumption_total$food_category,
+                      title = ""),
          xaxis = list(title = "Consumption (in kg/person/year)"))
 
 fig3 <- plot_ly(food_consumption_grouped,
@@ -135,16 +147,6 @@ annotations = list(
     showarrow = FALSE 
   ),  
   list( 
-    x = 0.86,  
-    y = 1.02,  
-    text = "Global CO2 Emission (in kg/person/year)",  
-    xref = "paper",  
-    yref = "paper",  
-    xanchor = "center",  
-    yanchor = "bottom",  
-    showarrow = FALSE 
-  ),  
-  list( 
     x = 0.2,  
     y = 0.1,  
     text = "% of Total Food Consumption",  
@@ -155,7 +157,61 @@ annotations = list(
     showarrow = FALSE 
   ),
   list( 
+    x = 0.86,  
+    y = 1.02,  
+    text = "Global CO2 Emission (in kg/person/year)",  
+    xref = "paper",  
+    yref = "paper",  
+    xanchor = "center",  
+    yanchor = "bottom",  
+    showarrow = FALSE 
+  ),  
+  list( 
     x = 0.8,  
+    y = 0.1,  
+    text = "% of Total Food Emission",  
+    xref = "paper",  
+    yref = "paper",  
+    xanchor = "center",  
+    yanchor = "bottom",  
+    showarrow = FALSE 
+  ))
+
+annotations1 = list( 
+  list( 
+    x = 0.45,  
+    y = 1.02,  
+    text = "Global Consumption (in kg/person/year)",  
+    xref = "paper",  
+    yref = "paper",  
+    xanchor = "center",  
+    yanchor = "bottom",  
+    showarrow = FALSE 
+  ),  
+  list( 
+    x = 0.45,  
+    y = 0.1,  
+    text = "% of Total Food Consumption",  
+    xref = "paper",  
+    yref = "paper",  
+    xanchor = "center",  
+    yanchor = "bottom",  
+    showarrow = FALSE 
+  ))
+
+annotations2 = list( 
+  list( 
+    x = 0.45,  
+    y = 1.02,  
+    text = "Global CO2 Emission (in kg/person/year)",  
+    xref = "paper",  
+    yref = "paper",  
+    xanchor = "center",  
+    yanchor = "bottom",  
+    showarrow = FALSE 
+  ),  
+  list( 
+    x = 0.45,  
     y = 0.1,  
     text = "% of Total Food Emission",  
     xref = "paper",  
@@ -166,35 +222,12 @@ annotations = list(
   ))
 ```
 
+Background and Data
+===================================== 
+
 ### Background:
 
 A 2018 study done by the Food and Agriculture Organization of the United Nations (FAO) collected food consumption and CO2 emission data for 130 countries around the world. The purpose was to determine how much carbon dioxide each country emits based on their diets. A secondary purpose was to illustrate the differences between the carbon dioxide emissions of animal products and non-animal products. I attempt to visualize this second goal.
-
-### Visualization:
-
-```{r echo=FALSE, warning=FALSE, fig.width = 8}
-subplot(fig1, fig2, fig3, fig4, nrows = 2,
-        shareY = TRUE,
-        heights = c(0.85, 0.15),
-        margin = 0.09) %>%
-  layout(title = "The Disproportionate Carbon Footprint of Animal Products",
-         annotations = annotations,
-         margin = list(t = 80),
-         updatemenus = list(
-           list(
-             type = "buttons",
-             y = .22,
-             buttons = list(
-               list(method = "restyle",
-                    args = list("visible", list(TRUE, TRUE, TRUE, TRUE)),
-                    label = "All"),
-               list(method = "restyle",
-                    args = list("visible", list(TRUE, TRUE, FALSE, FALSE)),
-                    label = "Global Consumption"),
-               list(method = "restyle",
-                    args = list("visible", list(FALSE, FALSE, TRUE, TRUE)),
-                    label = "Global Emission")))))
-```
 
 ### Data Source:
 
@@ -203,6 +236,51 @@ The original data is from the 2018 Food Carbon Footprint Index study done by the
 The data was stored in a poorly designed survey on the webpage and webscraped by Kasia Kulma. Her process can be found [here]("https://r-tastic.co.uk/post/from-messy-to-tidy/").
 
 I found the data through Thomas Mock's Tidy Tuesday project, which submits a new data set of interest every Tuesday to explore. The particular dataset for my data is [here]("https://github.com/rfordatascience/tidytuesday/blob/master/data/2020/2020-02-18/readme.md").
+
+Visualizations
+=====================================    
+   
+Column {.tabset}
+-------------------------------------
+
+### Global Consumption
+    
+```{r echo=FALSE, warning=FALSE, fig.width = 6}
+subplot(fig1, fig3, nrows = 2,
+        shareY = TRUE,
+        heights = c(0.85, 0.15),
+        margin = 0.09) %>%
+  layout(title = "The Disproportionate Carbon Footprint of Animal Products",
+         annotations = annotations1,
+         margin = list(t = 80))
+```
+   
+### Global Emission
+
+```{r echo=FALSE, warning=FALSE, fig.width = 6}
+subplot(fig2solo, fig4, nrows = 2,
+        shareY = TRUE,
+        heights = c(0.85, 0.15),
+        margin = 0.09) %>%
+  layout(title = "The Disproportionate Carbon Footprint of Animal Products",
+         annotations = annotations2,
+         margin = list(t = 80))
+```   
+ 
+### Overal Visualization
+    
+```{r echo=FALSE, warning=FALSE, fig.width = 6}
+subplot(fig1, fig2, fig3, fig4, nrows = 2,
+        shareY = TRUE,
+        heights = c(0.85, 0.15),
+        margin = 0.09) %>%
+  layout(title = "The Disproportionate Carbon Footprint of Animal Products",
+         annotations = annotations,
+         margin = list(t = 80))
+```
+
+Reflection
+=====================================    
 
 ### Project Reflection:
 
