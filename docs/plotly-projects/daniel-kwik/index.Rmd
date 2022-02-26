@@ -109,7 +109,7 @@ The story I am telling through this visualization is the increasing number and c
 
 ## Improvements
 
-I took Tom Takeuchi's idea of using crosstalk to create a multi-selct bar for the plot. 
+I took Tom Takeuchi's idea of using crosstalk to create a multi-select bar for the plot, which selects years. 
 
 ```{r}
 library(crosstalk)
