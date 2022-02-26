@@ -250,7 +250,7 @@ subplot(fig1, fig3, nrows = 2,
         shareY = TRUE,
         heights = c(0.85, 0.15),
         margin = 0.09) %>%
-  layout(title = "The Disproportionate Carbon Footprint of Animal Products",
+  layout(title = "Global Consumption of Food by Category",
          annotations = annotations1,
          margin = list(t = 80))
 ```
@@ -262,7 +262,7 @@ subplot(fig2solo, fig4, nrows = 2,
         shareY = TRUE,
         heights = c(0.85, 0.15),
         margin = 0.09) %>%
-  layout(title = "The Disproportionate Carbon Footprint of Animal Products",
+  layout(title = "Global Emission of CO2 by Food Category",
          annotations = annotations2,
          margin = list(t = 80))
 ```   
