@@ -79,7 +79,25 @@ oilSpills %>% filter(Source == "Vessel sources, total" |
   plot_ly(x = ~Year, y =~`Gallons spilled`, color = ~Source, type="bar", colors = 
             c("#a6cee3", "#1f78b4", "#b2df8a"),
            width = 1000) %>%
-  layout(barmode = 'dodge', yaxis = list(fixedrange = FALSE)) 
+  layout(yaxis = list(fixedrange = FALSE),
+         updatemenus = list(
+            list(
+              type = "buttons",
+              x = 0.6,
+              y = 1,
+              direction = "right",
+              buttons = list(
+                
+                list(method = "relayout",
+                args = list("barmode","dodge"),
+                label = "Grouped"),
+
+                list(method = "relayout",
+                args = list("barmode","stack"),
+                label = "Stacked")))
+
+                
+  ))
 ```
 
 ["On April 20, 2010, the oil drilling rig Deepwater Horizon, operating in the Macondo Prospect in the Gulf of Mexico, exploded and sank resulting in the death of 11 workers on the Deepwater Horizon and the largest spill of oil in the history of marine oil drilling operations."](https://www.epa.gov/enforcement/deepwater-horizon-bp-gulf-mexico-oil-spill#:~:text=On%20April%2020%2C%202010%2C%20the,of%20marine%20oil%20drilling%20operations.)
@@ -117,8 +135,25 @@ oilSpills %>% filter(Source != "TOTAL all spills",
   summarise(n = sum(Incidents)) %>%
   add_trace(x = ~Year, y = ~n, type = 'scatter',  mode = 'markers', 
             name = "Incidents", yaxis = "y2", color = I("black")) %>%
-  layout(barmode = 'stack', yaxis2 = y2,
-         yaxis = list(fixedrange = FALSE))
+  layout(yaxis2 = y2,
+         yaxis = list(fixedrange = FALSE),
+          updatemenus = list(
+            list(
+              type = "buttons",
+              x = 0.6,
+              y = 1,
+              direction = "right",
+              buttons = list(
+                
+                list(method = "relayout",
+                args = list("barmode","dodge"),
+                label = "Grouped"),
+
+                list(method = "relayout",
+                args = list("barmode","stack"),
+                label = "Stacked")))
+  )) %>%
+  rangeslider()
 
 ```
 
