@@ -107,7 +107,6 @@ mi_cases_by_day <- mi_cases_by_day %>%
   )
 ```
 
-
 ```{r message=FALSE}
 ay <- list(overlaying = "y", side = "right", title = "Deaths")
 
@@ -131,6 +130,8 @@ plot_ly(mi_cases_by_day,x = ~Date) %>%
   ) %>%
   rangeslider()
 ```
+
+### Log 10 chart
 
 ```{r}
 ay <- list(overlaying = "y", side = "right", title = "Deaths")
