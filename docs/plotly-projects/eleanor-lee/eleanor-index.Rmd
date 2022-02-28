@@ -17,20 +17,40 @@ knit: (
 knitr::opts_chunk$set(echo = TRUE)
 library(stringr)
 library(dplyr)
+library(ggplot2)
+library(plotly)
 ```
 
 ## Visualization
 ```{r, data wrangling, include=FALSE}
 # Load data
 rest_1_orders <- read.csv(file = "restaurant-1-orders.csv")
+```
 
-# Group by Item.Name, sum Quantity, take avg Price (should be constant tho)
+```{r, remove drinks, include=FALSE}
+# drinks include strings 'wine', 'Water'
+
+# Couldn't get this to work... so sad!
+# remove_on_word <- function(df, string, column) {
+#   df <- df[!grepl(string, df$column),]
+# }
+#remove_on_word(rest_1_orders, 'wine', Item.Name)
+
+rest_1_orders <- rest_1_orders[!grepl('wine', rest_1_orders$Item.Name),]
+rest_1_orders <- rest_1_orders[!grepl('Water', rest_1_orders$Item.Name),]
+rest_1_orders <- rest_1_orders[!grepl('Coke', rest_1_orders$Item.Name),]
+rest_1_orders <- rest_1_orders[!grepl('Lemonade', rest_1_orders$Item.Name),]
+```
+
+``` {r, group by names, include=FALSE}
+# Group by Item.Name, sum Quantity, take avg Price (price should be constant, tho)
 rest_1_orders$Item.Name <- as.factor(rest_1_orders$Item.Name)
 name_and_quant <- data.frame(
   Item.Name = rest_1_orders$Item.Name,
   Quantity = rest_1_orders$Quantity,
   Product.Price = rest_1_orders$Product.Price
 )
+
 name_and_quant <- name_and_quant %>%
   group_by(Item.Name) %>%
   summarise(Total.Quantity = sum(Quantity),
@@ -55,29 +75,31 @@ name_and_quant$Item.Name <- as.character(name_and_quant$Item.Name)
 # ^^ tried to get this guy working, but he wouldn't... so sad!!
 
 name_and_quant <- name_and_quant %>% mutate(Meat.Veg = 
-                                                ifelse(str_detect(Item.Name, "Fish"),
+                                                ifelse(str_detect(Item.Name, "Fish") | 
+                                                         str_detect(Item.Name, "Beef") |
+                                                         str_detect(Item.Name, "Chicken") |
+                                                         str_detect(Item.Name, "Pork") |
+                                                         str_detect(Item.Name, "Lamb") |
+                                                         str_detect(Item.Name, "Goat") |
+                                                         str_detect(Item.Name, "Prawn") |
+                                                         str_detect(Item.Name, "Meat") |
+                                                         str_detect(Item.Name, "Tandoori Mixed"),
                                                        "Meat", Meat.Veg))
-name_and_quant <- name_and_quant %>% mutate(Meat.Veg = 
-                                                ifelse(str_detect(Item.Name, "Beef"),
-                                                       "Meat", Meat.Veg))
-name_and_quant <- name_and_quant %>% mutate(Meat.Veg = 
-                                                ifelse(str_detect(Item.Name, "Chicken"),
-                                                       "Meat", Meat.Veg))
-name_and_quant <- name_and_quant %>% mutate(Meat.Veg = 
-                                                ifelse(str_detect(Item.Name, "Pork"),
-                                                       "Meat", Meat.Veg))
-name_and_quant <- name_and_quant %>% mutate(Meat.Veg = 
-                                                ifelse(str_detect(Item.Name, "Lamb"),
-                                                       "Meat", Meat.Veg))
-name_and_quant <- name_and_quant %>% mutate(Meat.Veg = 
-                                                ifelse(str_detect(Item.Name, "Goat"),
-                                                       "Meat", Meat.Veg))
-name_and_quant <- name_and_quant %>% mutate(Meat.Veg = 
-                                                ifelse(str_detect(Item.Name, "Prawn"),
-                                                       "Meat", Meat.Veg))
-name_and_quant <- name_and_quant %>% mutate(Meat.Veg = 
-                                                ifelse(str_detect(Item.Name, "Meat"),
-                                                       "Meat", Meat.Veg))
+```
+
+```{r, boxplot of average price of meat/veg dishes, include=FALSE}
+
+box <- ggplot(data=name_and_quant, mapping=aes(x=Meat.Veg, y=Product.Price, color=Meat.Veg)) +
+  scale_colour_manual(values = c("tomato3","darkgreen")) +
+  theme_bw() + 
+  ggtitle("Price Distributions for Meat & Vegetable Dishes") +
+  xlab("Type of Dish") +
+  ylab("Price") +
+  geom_boxplot()
+```
+
+``` {r}
+ggplotly(box)
 ```
 
 ```{r, plot visualization, include=FALSE}
@@ -88,12 +110,15 @@ library(plotly)
 
 p <- name_and_quant %>%
   ggplot( aes(Product.Price, Total.Quantity, color=Meat.Veg, label=Item.Name) ) +
-  geom_jitter() +
+  scale_colour_manual(values = c("tomato3","darkgreen")) +
+  geom_jitter(width=0.15) +
   theme_bw() + 
   ggtitle("Items' Number of Orders by Price") +
   xlab("Item Price") +
   ylab("Total Number of Orders")
 ```
+
+
 ```{r}
 ggplotly(p)
 ```
