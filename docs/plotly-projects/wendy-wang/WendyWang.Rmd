@@ -1,0 +1,84 @@
+---
+title: "2022 Beijng WinterOlympicGames_Plotly"
+author: "Chen (Wendy) Wang"
+date: "Spring 2022"
+output: html_document
+knit: (
+  function(inputFile, encoding) { 
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      output_file = 'index.html') })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(plotly)
+library(dplyr) 
+library(tidyr)
+library(fastR2)
+library(tidyverse)
+library(plotly)
+library(devtools)
+library(shiny)
+```
+
+# Data Information
+
+The whole dataset is about the medal count for the 2022 Beijing Winter Olympics.
+
+```{r, echo = FALSE}
+medals <- read.csv("Medalists.csv")
+Medals_Standing <- read.csv("Medals_Standing.csv")
+```
+
+# Plot
+
+## Total Medals
+
+```{r, echo = FALSE, fig.width = 13, fig.height = 7}
+bar_fig <- plot_ly(
+  data = Medals_Standing,
+  y = ~Total,
+  x = ~NOC,
+  type = 'bar'
+) %>% 
+  layout(title = 'The Total Number of Medals Won by Each Country',
+         xaxis = list(categoryorder = "total descending"),
+         yaxis = list(title = 'Total of Medals'), barmode = 'group'
+         )
+bar_fig
+```
+
+## The Numbers of Winners
+
+```{r, echo = FALSE}
+medals_new <- medals %>%
+  group_by(NOC, MEDAL)%>%
+  summarize(total = count(MEDAL), .groups = 'keep')%>%
+  arrange(desc(total))
+```
+
+```{r, echo = FALSE, fig.width = 13, fig.height = 7}
+type_medal_fig <- plot_ly(
+  data = medals_new,
+  y = ~total,
+  x = ~NOC,
+  type = 'bar',
+  color = ~ MEDAL,
+  texttemplate = "%{label}",
+  textposition = "inside",
+  spans = 15
+) %>% 
+  layout(title = 'The Number of Winners by Each Country',
+         xaxis = list(categoryorder = "total descending"),
+         yaxis = list(title = 'Total of Medals'), barmode = 'group'
+         )
+
+type_medal_fig
+```
+
+
+# Reference
+
+The data from Kaggle.https://www.kaggle.com/vaibhavchopra2/olympic-games-beijing-2022

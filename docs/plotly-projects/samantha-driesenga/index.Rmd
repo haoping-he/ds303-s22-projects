@@ -1,0 +1,137 @@
+---
+title: "I Speak for the Trees"
+author: "Samantha Driesenga sld39"
+date: "2/9/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(plotly)
+library(tidyverse)
+```
+
+
+### Topic Background
+
+Because I am a big environmentalist, I chose the topic of deforestation. To do this, I chose to
+plot the change in forest cover (in percentage) for each individual continent from 1990-2020.
+
+### Data Overview
+
+The data I used for this visual was originally published by the UN Food and Agriculture
+Organization (FAO).
+
+Original published form: https://fra-data.fao.org/WO/assessment/fra2020 
+
+Where I obtained the data:
+https://ourworldindata.org/grapher/forest-area-as-share-of-land-area?tab=chart&time=earliest..latest&country=England~Scotland~FRA~USA
+
+
+```{r load-data, include=FALSE}
+forest_data <- readr::read_csv('forest-area-as-share-of-land-area.csv')
+summary(forest_data)
+nrow(forest_data)
+#forest_data
+glimpse(forest_data)
+```
+
+```{r group, include=FALSE}
+forest_data %>%
+  group_by(Entity)
+```
+```{r ungroup, include=FALSE}
+forest_data %>%
+  ungroup
+```
+
+
+```{r wrangle, include=FALSE}
+wrangled_forest <- forest_data %>%
+  mutate(land_type = as.factor(ifelse(Entity == 'World', 'World',
+                            ifelse(!is.na(Code), 'Country', 
+                            ifelse(Entity %in% c('Africa' , 'Asia' , 'Central America' , 'Europe' , 'Northern America',  'Oceania' , 'South America') , 'Continent' , 
+                                   'Region')))))
+wrangled_forest %>%
+  arrange(desc(Entity))
+```
+```{r, include=FALSE}
+wrangled_forest <- wrangled_forest %>%
+  filter(land_type == 'Continent')
+wrangled_forest
+```
+
+```{r, include=FALSE}
+Africa_forest <- wrangled_forest %>%
+  filter(Entity == 'Africa')
+```
+
+```{r, include=FALSE}
+Asia_forest <- wrangled_forest %>%
+  filter(Entity == 'Asia')
+```
+
+```{r, include=FALSE}
+CA_forest <- wrangled_forest %>%
+  filter(Entity == 'Central America')
+```
+
+```{r, include=FALSE}
+Europe_forest <- wrangled_forest %>%
+  filter(Entity == 'Europe')
+```
+
+```{r, include=FALSE}
+NA_forest <- wrangled_forest %>%
+  filter(Entity == 'Northern America')
+```
+
+```{r, include=FALSE}
+Oceania_forest <- wrangled_forest %>%
+  filter(Entity == 'Oceania')
+```
+
+```{r, include=FALSE}
+SA_forest <- wrangled_forest %>%
+  filter(Entity == 'South America')
+```
+
+```{r, include=FALSE}
+continent_forest <- data.frame(Africa_forest, Asia_forest, CA_forest, Europe_forest, NA_forest, Oceania_forest, SA_forest)
+```
+
+```{r, include=FALSE}
+continent_forest <- continent_forest %>%
+  group_by('Entity')
+```
+
+```{r, echo=FALSE}
+plot_vis <- plot_ly(continent_forest, x = ~Year, y = ~forest_cover, name = 'Africa', type = 'scatter', mode = 'lines')
+
+plot_vis <- plot_vis %>% add_trace(y = ~forest_cover.1, name = 'Asia', type = 'scatter', mode = 'lines')
+plot_vis <- plot_vis %>% add_trace(y = ~forest_cover.2, name = 'Central America', type = 'scatter', mode = 'lines')
+plot_vis <- plot_vis %>% add_trace(y = ~forest_cover.3, name = 'Europe', type = 'scatter', mode = 'lines')
+plot_vis <- plot_vis %>% add_trace(y = ~forest_cover.4, name = 'North America', type = 'scatter', mode = 'lines')
+plot_vis <- plot_vis %>% add_trace(y = ~forest_cover.5, name = 'Ociania', type = 'scatter', mode = 'lines')
+plot_vis <- plot_vis %>% add_trace(y = ~forest_cover.6, name = 'South America', type = 'scatter', mode = 'lines')
+
+plot_vis <- plot_vis %>% layout(title = "Continental Forest Coverage",
+         xaxis = list(title = "Year"),
+         yaxis = list (title = "Forest Coverage (Percentage)"))
+
+
+
+plot_vis
+```
+
+### Reflection
+
+What I took from Wilke to use in this project is how we are telling a story. Though fighting
+deforestation is a global effort, it isn't necessarily globally caused. There are places in 
+the world in a state of reforestation, though deforestation does continue to outweigh
+reforestation.
+I wish I was able to show the change in forest cover numerically as well as graphically.
+Perhaps in my next attempt I'll be able to include the change from the previous year in my
+traces.
+What I found most frustrating was the amount of coding required to make the graph. I made
+nearly an exactly identical graph of this data for a previous project in about half the amount
+of code.
