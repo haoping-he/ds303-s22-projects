@@ -83,6 +83,7 @@ agg_data = mi_data.groupby(["Date"], as_index=False).sum()
 
 ```{r data-load}
 mi_cases_by_day = py$agg_data
+max_cases = max(mi_cases_by_day$Cases)
 ```
 
 ### Initial Data Visualization:
@@ -125,11 +126,36 @@ plot_ly(mi_cases_by_day,x = ~Date) %>%
             color = I("darkorchid1"), alpha = .8/4, mode = 'markers') %>%
   layout(
     title = "Michigan COVID Cases/Deaths<br>With 7-day Moving Average",
-    yaxis2 = ay, legend = list(y = .97, x = .6, bgcolor = 'rgba(0,0,0,0)'),
+    yaxis2 = ay, legend = list(bgcolor = 'rgba(0,0,0,0)'),
     margin = list(r = 50, t = 50)
   ) %>%
   rangeslider()
 ```
+
+```{r}
+ay <- list(overlaying = "y", side = "right", title = "Deaths")
+
+plot_ly(mi_cases_by_day,x = ~Date) %>% 
+  # Cases
+  add_trace(y = ~log10(Cases), alpha = .6, name = "Cases", type = "scatter",
+            color = I("coral1"), mode = 'markers') %>%
+  # Cases MA
+  add_lines(y = ~log10(cases_ma), alpha = .8, name = "Cases MA", mode = 'markers',
+            color = I("coral1")) %>%
+  # Deaths
+  add_trace(name = "Deaths", yaxis = "y2", alpha = .15, y = ~log10(Deaths), x = ~Date,
+            color = I("darkorchid1"), type = "scatter", mode = 'markers') %>%
+  # Deaths MA
+  add_lines(name = "Deaths MA", yaxis = "y2", y = ~log10(deaths_ma), x = ~Date,
+            color = I("darkorchid1"), alpha = .8/4, mode = 'markers') %>%
+  layout(
+    title = "Michigan COVID Cases/Deaths<br>With 7-day Moving Average",
+    yaxis2 = ay, legend = list(bgcolor = 'rgba(0,0,0,0)'),
+    margin = list(r = 50, t = 50)
+  ) %>%
+  rangeslider()
+```
+
 
 ```{block include = ! params$show_code, echo = TRUE}
 A version of this page showing code is available [here](show-code-index.html).
