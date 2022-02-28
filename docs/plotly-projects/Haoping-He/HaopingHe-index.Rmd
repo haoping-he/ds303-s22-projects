@@ -107,7 +107,7 @@ However, according to the research, in 2019, 3 most popular fruit are tomatoes, 
 - Albania	consumes most Grapes \
 
 ```{r echo=FALSE, warning=FALSE}
-MOST <- Data %>% 
+Top_five_fruit <- Data %>% 
   filter(Oranges == max(Data$Oranges))%>%
   select(Country, Oranges)%>%
   rename(Values = Oranges)%>%
@@ -141,7 +141,7 @@ rbind(
   add_column(Fruit = 'Grapes') 
 )
 
-kable(MOST)
+kable(Top_five_fruit)
 ```
 
 \
@@ -149,31 +149,24 @@ kable(MOST)
 
 
 ```{r echo=FALSE, warning=FALSE}
+Top_10_Countries <- Data %>% 
+  arrange(desc(Fruit))%>%
+  head(15)
 
-
-D <- Data%>%
-  select("Country", "Bananas" , "Oranges", "Apples" , "Grapes", "Plantains")%>%
+Pivot_Data <- Data%>%
+  select("Country", 'Code', "Bananas" , "Oranges", "Apples" , "Grapes", "Plantains")%>%
   pivot_longer(
     cols = c("Bananas" , "Oranges", "Apples" , "Grapes", "Plantains"),
-    names_to = 'Fruit',
-    values_to = 'value'
-  )
+    names_to = 'FruitType',
+    values_to = 'Consumption'
+  ) 
+
+Countries <- Data %>% arrange(desc(Fruit)) %>% head(10)%>% select(Country)
 
 
-library(plotly)
-
-fig <- plot_ly(
-  type = 'scatter',
-  x = D$Fruit,
-  y = D$value,
-  color = 'green',
-  text = paste(                "Make: ", D$value, 'kg/year',
-                               "<br>Country: ", D$Country),
-  hoverinfo = 'text',
-  mode = 'markers'
-    )
-
-fig
+Pivot_Data_Country <-Pivot_Data %>% 
+  left_join(Data %>% select(Country, Fruit), on = Country) %>% 
+  filter(Country %in% Countries$Country)%>% arrange(desc(Fruit))
 ```
 \
 \
@@ -182,14 +175,14 @@ fig
 # Top 10 countries that consumed most fruits per capita
 ```{r, echo=FALSE, warning=FALSE}
 
-Top_10 <- Data %>% 
+Top_10_Countries <- Data %>% 
   arrange(desc(Fruit))%>%
   head(15)
 
-fig <- plot_ly(Top_10, x = ~ reorder(Country, -Fruit), y = ~Fruit, name = 'Fruit total', type = 'scatter', mode = 'lines',
+fig <- plot_ly(Top_10_Countries, x = ~ reorder(Country, -Fruit), y = ~Fruit, name = 'Fruit total', type = 'scatter', mode = 'lines',
   text = paste(
-               "<br>Country: ", Top_10$Country,"<br>",
-                 Top_10$Fruit, 'kg/year'),
+               "<br>Country: ", Top_10_Countries$Country,"<br>",
+                 Top_10_Countries$Fruit, 'kg/year'),
   hoverinfo = 'text') %>% 
   layout(title= "Which Country Eats the Most Fruits Per Capita?")
 
@@ -203,7 +196,8 @@ fig
 
 # Fruit consumption by fruit type (2013)
 
-```{r echo=FALSE}
+```{r, echo=FALSE, warning=FALSE}
+
 Data$hover <- with(Data, paste( '<b>' , Country , '</b>' , '<br>', 
                                            "Bananas", '<b>' , Bananas,'</b>', "kg/year", "<br>", 
                                            "Dates", '<b>' , Dates,'</b>', "kg/year", "<br>",
@@ -216,7 +210,115 @@ Data$hover <- with(Data, paste( '<b>' , Country , '</b>' , '<br>',
                                 "Pineapples", '<b>' , Pineapples,'</b>', "kg/year", "<br>",
                                 "Plantains", '<b>' , Plantains,'</b>', "kg/year", "<br>",
                                 "Other", '<b>' , Other,'</b>', "kg/year", "<br>"))
-         
+    
+```
+
+```{r, echo=FALSE, warning=FALSE}
+  
+
+D1 <- Data%>%
+  select(-c("Code", "hover"))%>%
+  pivot_longer(
+    cols = (-Country),
+    names_to = 'FruitType',
+    values_to = 'value'
+  )
+
+D2 <- D1 %>% 
+  left_join(Data %>% select(Country, Code, Fruit), on = Country)
+
+countryKey <- highlight_key(Data, ~Country)
+
+base <- plot_ly(countryKey, color = I("black")) %>% 
+  group_by(Country)
+
+plot11 <- D2 %>%
+      highlight_key(~Country) %>%
+      plot_ly(type='choropleth', 
+                      locations=D2$Code, 
+                      z=D2$Fruit,  
+                      #text=Data$hover, 
+                      colorscale="Viridis") %>% 
+  layout(title = 'Fruit Consumption')  %>% 
+    highlight("plotly_click", persistent = FALSE, dynamic = TRUE)
+
+plot22 <- D2 %>% 
+    plot_ly(x = ~Fruit, y = ~value)  %>%
+    add_bars() %>%
+  #layout(barmode = "overlay") %>%
+  highlight("plotly_click")
+
+```
+
+
+# Check Fruit Consumption in Each Country
+```{r, echo=FALSE, warning=FALSE}
+library(crosstalk)
+
+countryKey <- highlight_key(Pivot_Data_Country, ~Country)
+
+
+line <- countryKey  %>% 
+  plot_ly( x = ~ reorder(Country, -Fruit), y = ~Fruit, 
+name = 'Fruit total', type = 'scatter', mode = 'lines+markers',
+  text = paste("<br>Country: ", Pivot_Data_Country$Country,"<br>",
+                 Pivot_Data_Country$Fruit, 'kg/year'),
+  hoverinfo = 'text') %>% 
+  layout(title= "Which Country Eats the Most Fruits Per Capita?")%>% 
+  highlight("plotly_click")
+
+
+bar <- countryKey %>% 
+  plot_ly()  %>%
+  add_bars(x = ~FruitType, y = ~Consumption, color = 'green') %>% 
+  layout(barmode = "overlay")
+
+crosstalk::bscols(line,bar) 
+
+```
+
+
+```{r, echo=FALSE, warning=FALSE}
+# library(crosstalk)
+# countryKey <- highlight_key(Pivot_Data, ~Country)
+# 
+# map <- countryKey %>%
+#   plot_ly()%>%
+#   group_by(Country, Code) %>%
+#   summarise(Consumption = sum(Consumption, na.rm = TRUE)) %>%
+#   add_choropleth(
+#     locations=~Code, 
+#     z=~Consumption,  
+#     #text=Data$hover, 
+#     colorscale="Viridis") %>% 
+#   layout(title = 'Fruit Consumption')  %>% 
+#   highlight("plotly_click", persistent = FALSE, dynamic = TRUE)
+# 
+# barplot <- countryKey %>% 
+#   plot_ly(x = ~FruitType, y = ~Consumption)  %>%
+#   add_bars() 
+#   #layout(barmode = "overlay")
+# 
+# dotplot <- countryKey %>%
+#   plot_ly()%>%
+#   group_by(Country, Code) %>%
+#   summarise(Consumption = sum(Consumption, na.rm = TRUE)) %>%
+#   add_markers(
+#     x = ~Country, y = ~Consumption
+#   )%>%
+#  highlight("plotly_click")
+# 
+# crosstalk::bscols(dotplot,barplot) 
+
+
+```
+
+
+
+
+
+```{r echo=FALSE}
+   
        
 
 fig3 <-  plot_ly(Data, type='choropleth', 
