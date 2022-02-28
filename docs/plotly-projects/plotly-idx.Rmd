@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## The projects
 
 ```{r echo = FALSE, results = "asis"}
-projects <- dir(pattern = "index.Rmd", recursive = TRUE)
+projects <- dir(pattern = "index.Rmd|Wendy", recursive = TRUE)
 project_list <- character(0)
 for (p in projects) {
   yaml <- rmarkdown::yaml_front_matter(p)
